@@ -5,7 +5,7 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            Text("Wort des Tages:")
+            Text("Aktuelles Wort:")
                 .font(.title2)
                 .bold()
 
