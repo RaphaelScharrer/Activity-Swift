@@ -34,19 +34,38 @@ struct MinigameView: View {
                         .onReceive(timer) { _ in
                             if timerRunning && timeRemaining > 0 {
                                 timeRemaining -= 1
-                            } else {
+                            } else if timeRemaining == 0{
                                 timerRunning = false
                             }
                         }
-
+                    
                     Button("Geschafft") {
                         timerRunning = false
                         presentationMode.wrappedValue.dismiss()
                     }
                     .padding()
-                    .background(Color.green)
+                    .background(timeRemaining != 0 && timerRunning ? Color.green : Color.gray)
                     .foregroundColor(.white)
                     .cornerRadius(10)
+                    .disabled(timeRemaining == 0 && !timerRunning)
+                    
+                    // Zeit ist abgelaufen
+                    if timeRemaining == 0 && !timerRunning {
+                        Text("Zeit ist abgelaufen!")
+                            .font(.title2)
+                            .bold()
+                            .foregroundColor(.red)
+                    }
+                    
+                    Button("Zurück") {
+                        timerRunning = false
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                    .padding()
+                    .background(timeRemaining == 0 && !timerRunning ? Color.blue : Color.gray)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                    .disabled(timeRemaining != 0 && timerRunning)
                 }
                 .padding()
             } else {

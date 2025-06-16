@@ -17,9 +17,14 @@ class GameData: ObservableObject {
     }
 
     func addPlayer(name: String) {
-        guard !name.isEmpty else { return }
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else { return }
+        
+        let lowerCasedNames = players.map { $0.name.lowercased() }
+        guard !lowerCasedNames.contains(trimmedName.lowercased()) else { return }
+        
         let defaultTeam = Team.allCases.first ?? .red
-        players.append(Player(name: name, team: defaultTeam))
+        players.append(Player(name: trimmedName, team: defaultTeam))
     }
 
     func removePlayer(_ player: Player) {
