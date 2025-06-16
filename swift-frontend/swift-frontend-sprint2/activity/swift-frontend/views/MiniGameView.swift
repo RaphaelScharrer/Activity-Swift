@@ -55,17 +55,18 @@ struct MinigameView: View {
                             .font(.title2)
                             .bold()
                             .foregroundColor(.red)
+                        Button("Zurück") {
+                            timerRunning = false
+                            presentationMode.wrappedValue.dismiss()
+                        }
+                        .padding()
+                        .background(timeRemaining == 0 && !timerRunning ? Color.blue : Color.gray)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                        .disabled(timeRemaining != 0 && timerRunning)
                     }
                     
-                    Button("Zurück") {
-                        timerRunning = false
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                    .padding()
-                    .background(timeRemaining == 0 && !timerRunning ? Color.blue : Color.gray)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-                    .disabled(timeRemaining != 0 && timerRunning)
+                    
                 }
                 .padding()
             } else {
