@@ -78,11 +78,11 @@ struct TeamSelectView: View {
                     Button("Fertig") {
                         navigateNext = true
                     }
-                    .disabled(!gameData.isValid)
+                    .disabled(!(gameData.isValid && gameData.validPlayersPerTeam))
                     .foregroundColor(.white)
                     .padding()
                     .frame(maxWidth: .infinity)
-                    .background(gameData.isValid ? Color.blue : Color.gray)
+                    .background(gameData.isValid && gameData.validPlayersPerTeam ? Color.blue : Color.gray)
                     .cornerRadius(12)
 
                     Button {

@@ -10,6 +10,11 @@ class GameData: ObservableObject {
     var isValid: Bool {
         players.count >= 4
     }
+    
+    var validPlayersPerTeam: Bool {
+        let teamCounts = Dictionary(grouping: players, by: { $0.team }).mapValues { $0.count }
+        return teamCounts.values.filter { $0 >= 2 }.count >= 2
+    }
 
     func addPlayer(name: String) {
         guard !name.isEmpty else { return }
