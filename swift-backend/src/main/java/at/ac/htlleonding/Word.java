@@ -22,10 +22,13 @@ public class Word {
 
     private String definition;
 
-    public Word(Long id, String word, String definition) {
+    private Integer points;
+
+    public Word(Long id, String word, String definition, Integer points) {
         this.id = id;
         this.word = word;
         this.definition = definition;
+        this.points = points;
     }
 
     public Word() {
@@ -53,5 +56,13 @@ public class Word {
 
     public void setDefinition(String definition) {
         this.definition = definition;
+    }
+
+    public Integer getPoints() {
+        return points;
+    }
+
+    public void setPoints(Integer points) {
+        this.points = points;
     }
 }
