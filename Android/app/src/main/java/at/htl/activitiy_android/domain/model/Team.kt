@@ -2,15 +2,19 @@ package at.htl.activitiy_android.domain.model
 
 import androidx.compose.ui.graphics.Color
 
-enum class Team(val label: String, val color: Color) {
-    RED("Rot", Color(0xFFE53935)),
-    BLUE("Blau", Color(0xFF1E88E5)),
-    GREEN("Grün", Color(0xFF43A047)),
-    YELLOW("Gelb", Color(0xFFFDD835));
+data class Team(
+    val id: Long? = null,
+    val position: Long = 0
+) {
+    // UI-Helper für Farben basierend auf Position
+    val color: Color
+        get() = when (position % 4) {
+            0L -> Color(0xFFE53935) // Rot
+            1L -> Color(0xFF1E88E5) // Blau
+            2L -> Color(0xFF43A047) // Grün
+            else -> Color(0xFFFDD835) // Gelb
+        }
 
-    fun next(): Team {
-        val all = entries
-        val idx = all.indexOf(this)
-        return all[(idx + 1) % all.size]
-    }
+    val label: String
+        get() = "Team ${position + 1}"
 }
