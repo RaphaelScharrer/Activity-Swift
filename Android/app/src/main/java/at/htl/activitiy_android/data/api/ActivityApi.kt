@@ -11,29 +11,17 @@ interface ActivityApi {
     @GET("api/teams")
     suspend fun getAllTeams(): List<Team>
 
-    @GET("api/teams/{id}")
-    suspend fun getTeam(@Path("id") id: Long): Team
-
     @POST("api/teams")
     suspend fun createTeam(@Body team: Team): Team
-
-    @PUT("api/teams/{id}")
-    suspend fun updateTeam(@Path("id") id: Long, @Body team: Team): Team
-
-    @DELETE("api/teams/{id}")
-    suspend fun deleteTeam(@Path("id") id: Long)
 
     // Players
     @GET("api/players")
     suspend fun getAllPlayers(): List<Player>
 
-    @GET("api/players/{id}")
-    suspend fun getPlayer(@Path("id") id: Long): Player
-
     @POST("api/players")
     suspend fun createPlayer(@Body player: Player): Player
 
-    @PUT("api/players/{id}")
+    @PUT("api/players/{id}") // Spieler updaten (für Team-Zuweisung!)
     suspend fun updatePlayer(@Path("id") id: Long, @Body player: Player): Player
 
     @DELETE("api/players/{id}")
