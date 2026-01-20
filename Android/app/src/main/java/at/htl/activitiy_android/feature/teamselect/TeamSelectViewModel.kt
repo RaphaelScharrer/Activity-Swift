@@ -32,6 +32,8 @@ class TeamSelectViewModel : ViewModel() {
             is TeamSelectEvent.RemovePlayer -> removePlayerLocally(event.playerId)
             is TeamSelectEvent.RemovePlayerByName -> removePlayerByName(event.name)
             is TeamSelectEvent.ChangeTeam -> changeTeamLocally(event.playerId, event.teamId)
+            is TeamSelectEvent.ChangeTeamByName -> changeTeamByName(event.playerName, event.teamId)
+
             TeamSelectEvent.ClearMessages -> _state.update {
                 it.copy(error = null, successMessage = null)
             }
@@ -125,20 +127,15 @@ class TeamSelectViewModel : ViewModel() {
     private fun removePlayerLocally(playerId: Long) {
         viewModelScope.launch {
             try {
-                // Wenn Spieler bereits gespeichert ist, vom Backend löschen
+                // Nur vom Backend löschen, wenn Player dort existiert
                 MockRepository.deletePlayer(playerId)
 
-                // Spieler aus der Liste entfernen
                 _state.update { s ->
                     s.copy(
                         players = s.players.filterNot { it.player.id == playerId },
-                        hasChanges = false  // Wurde direkt gelöscht
+                        hasChanges = false
                     )
                 }
-
-                // Auch aus pending entfernen falls vorhanden
-                pendingPlayers.removeAll { it.id == playerId }
-
             } catch (e: Exception) {
                 _state.update {
                     it.copy(error = "Fehler beim Löschen: ${e.message}")
@@ -148,15 +145,12 @@ class TeamSelectViewModel : ViewModel() {
     }
 
     private fun removePlayerByName(name: String) {
-        // Für neue Spieler ohne ID: nur lokal entfernen
         _state.update { s ->
             s.copy(
-                players = s.players.filterNot { it.player.name == name }
-                // hasChanges bleibt wie es ist
+                players = s.players.filterNot { it.player.name == name },
+                hasChanges = true  // Änderung markieren
             )
         }
-
-        // Aus pending entfernen
         pendingPlayers.removeAll { it.name == name }
     }
 
@@ -220,6 +214,27 @@ class TeamSelectViewModel : ViewModel() {
                     )
                 }
             }
+        }
+    }
+
+    private fun changeTeamByName(playerName: String, teamId: Long) {
+        _state.update { s ->
+            val updatedPlayers = s.players.map { playerWithTeam ->
+                if (playerWithTeam.player.name == playerName) {
+                    val updatedPlayer = playerWithTeam.player.copy(team = teamId)
+                    val newTeam = s.teams.find { it.id == teamId }
+                    PlayerWithTeam(updatedPlayer, newTeam)
+                } else {
+                    playerWithTeam
+                }
+            }
+            s.copy(players = updatedPlayers, hasChanges = true)
+        }
+
+        // Auch in pendingPlayers aktualisieren
+        val index = pendingPlayers.indexOfFirst { it.name == playerName }
+        if (index != -1) {
+            pendingPlayers[index] = pendingPlayers[index].copy(team = teamId)
         }
     }
 }

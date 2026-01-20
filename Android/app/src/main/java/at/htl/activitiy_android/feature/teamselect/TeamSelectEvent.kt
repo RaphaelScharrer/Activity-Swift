@@ -10,4 +10,5 @@ sealed interface TeamSelectEvent {
     data object LoadData : TeamSelectEvent
     data class SelectTeam(val teamId: Long) : TeamSelectEvent
     data object SaveTeamsAndPlayers : TeamSelectEvent
+    data class ChangeTeamByName(val playerName: String, val teamId: Long) : TeamSelectEvent
 }

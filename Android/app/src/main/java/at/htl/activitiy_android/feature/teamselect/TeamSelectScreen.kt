@@ -184,12 +184,12 @@ fun PlayerCreationScreen(
                                 onChangeTeam = { teamId ->
                                     playerWithTeam.player.id?.let { playerId ->
                                         vm.onEvent(TeamSelectEvent.ChangeTeam(playerId, teamId))
-                                    }
+                                    } ?: vm.onEvent(TeamSelectEvent.ChangeTeamByName(playerWithTeam.player.name, teamId))
                                 },
                                 onRemove = {
                                     playerWithTeam.player.id?.let { playerId ->
                                         vm.onEvent(TeamSelectEvent.RemovePlayer(playerId))
-                                    }
+                                    } ?: vm.onEvent(TeamSelectEvent.RemovePlayerByName(playerWithTeam.player.name))
                                 },
                                 enabled = !state.isLoading
                             )
