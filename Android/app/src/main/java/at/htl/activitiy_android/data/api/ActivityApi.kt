@@ -26,20 +26,4 @@ interface ActivityApi {
 
     @DELETE("api/players/{id}")
     suspend fun deletePlayer(@Path("id") id: Long)
-
-    // Words
-    @GET("api/words")
-    suspend fun getAllWords(): List<Word>
-
-    @GET("api/words/{id}")
-    suspend fun getWord(@Path("id") id: Long): Word
-
-    @POST("api/words")
-    suspend fun createWord(@Body word: Word): Word
-
-    @PUT("api/words/{id}")
-    suspend fun updateWord(@Path("id") id: Long, @Body word: Word): Word
-
-    @DELETE("api/words/{id}")
-    suspend fun deleteWord(@Path("id") id: Long)
 }
