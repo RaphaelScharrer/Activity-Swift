@@ -2,9 +2,11 @@ package at.htl.activitiy_android.feature.teamselect
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import at.htl.activitiy_android.data.api.RetrofitInstance
+import at.htl.activitiy_android.data.api.MockRepository
+// import at.htl.activitiy_android.data.api.RetrofitInstance
 import at.htl.activitiy_android.domain.model.Player
 import at.htl.activitiy_android.domain.model.PlayerWithTeam
+import at.htl.activitiy_android.domain.model.Team
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -12,13 +14,13 @@ import kotlinx.coroutines.launch
 
 class TeamSelectViewModel : ViewModel() {
 
-    private val api = RetrofitInstance.api
+    // MOCK: Verwende MockRepository statt echtem Backend
+    // private val api = RetrofitInstance.api
+
     private val _state = MutableStateFlow(TeamSelectState())
     val state: StateFlow<TeamSelectState> = _state
 
-    init {
-        loadData()
-    }
+    private val pendingPlayers = mutableListOf<Player>()
 
     fun onEvent(event: TeamSelectEvent) {
         when (event) {
@@ -26,12 +28,18 @@ class TeamSelectViewModel : ViewModel() {
                 it.copy(nameInput = event.value, error = null)
             }
 
-            TeamSelectEvent.AddPlayer -> addPlayer()
-            is TeamSelectEvent.RemovePlayer -> removePlayer(event.playerId)
-            is TeamSelectEvent.ChangeTeam -> changeTeam(event.playerId, event.teamId)
-            TeamSelectEvent.AssignRandomTeams -> assignRandomTeams()
-            TeamSelectEvent.ClearError -> _state.update { it.copy(error = null) }
+            TeamSelectEvent.AddPlayer -> addPlayerLocally()
+            is TeamSelectEvent.RemovePlayer -> removePlayerLocally(event.playerId)
+            is TeamSelectEvent.RemovePlayerByName -> removePlayerByName(event.name)
+            is TeamSelectEvent.ChangeTeam -> changeTeamLocally(event.playerId, event.teamId)
+            TeamSelectEvent.ClearMessages -> _state.update {
+                it.copy(error = null, successMessage = null)
+            }
             TeamSelectEvent.LoadData -> loadData()
+            is TeamSelectEvent.SelectTeam -> _state.update {
+                it.copy(selectedTeamId = event.teamId)
+            }
+            TeamSelectEvent.SaveTeamsAndPlayers -> saveToBackend()
         }
     }
 
@@ -39,10 +47,10 @@ class TeamSelectViewModel : ViewModel() {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             try {
-                val teams = api.getAllTeams()
-                val players = api.getAllPlayers()
+                // MOCK: Verwende MockRepository
+                val teams = MockRepository.getAllTeams()
+                val players = MockRepository.getAllPlayers()
 
-                // Players mit Teams zusammenführen
                 val playersWithTeams = players.map { player ->
                     PlayerWithTeam(
                         player = player,
@@ -55,9 +63,13 @@ class TeamSelectViewModel : ViewModel() {
                         teams = teams,
                         players = playersWithTeams,
                         isLoading = false,
-                        selectedTeamId = teams.firstOrNull()?.id
+                        selectedTeamId = teams.firstOrNull()?.id,
+                        hasChanges = false
                     )
                 }
+
+                pendingPlayers.clear()
+
             } catch (e: Exception) {
                 _state.update {
                     it.copy(
@@ -69,7 +81,7 @@ class TeamSelectViewModel : ViewModel() {
         }
     }
 
-    private fun addPlayer() {
+    private fun addPlayerLocally() {
         val s = _state.value
         val name = s.nameInput.trim()
 
@@ -78,32 +90,55 @@ class TeamSelectViewModel : ViewModel() {
             return
         }
 
-        viewModelScope.launch {
-            try {
-                val newPlayer = Player(
-                    name = name,
-                    team = s.selectedTeamId,
-                    pointsEarned = 0
-                )
+        if (s.teams.isEmpty()) {
+            _state.update { it.copy(error = "Bitte zuerst Teams generieren!") }
+            return
+        }
 
-                api.createPlayer(newPlayer)
+        if (s.players.any { it.player.name.equals(name, ignoreCase = true) }) {
+            _state.update { it.copy(error = "Spieler existiert bereits.") }
+            return
+        }
 
-                _state.update { it.copy(nameInput = "") }
-                loadData() // Reload nach Erstellen
+        val newPlayer = Player(
+            id = null,
+            name = name,
+            team = s.selectedTeamId,
+            pointsEarned = 0
+        )
 
-            } catch (e: Exception) {
-                _state.update {
-                    it.copy(error = "Fehler beim Hinzufügen: ${e.message}")
-                }
-            }
+        pendingPlayers.add(newPlayer)
+
+        val selectedTeam = s.teams.find { it.id == s.selectedTeamId }
+        val newPlayerWithTeam = PlayerWithTeam(newPlayer, selectedTeam)
+
+        _state.update {
+            it.copy(
+                nameInput = "",
+                players = it.players + newPlayerWithTeam,
+                hasChanges = true,
+                successMessage = "Spieler lokal hinzugefügt. Bitte speichern!"
+            )
         }
     }
 
-    private fun removePlayer(playerId: Long) {
+    private fun removePlayerLocally(playerId: Long) {
         viewModelScope.launch {
             try {
-                api.deletePlayer(playerId)
-                loadData()
+                // Wenn Spieler bereits gespeichert ist, vom Backend löschen
+                MockRepository.deletePlayer(playerId)
+
+                // Spieler aus der Liste entfernen
+                _state.update { s ->
+                    s.copy(
+                        players = s.players.filterNot { it.player.id == playerId },
+                        hasChanges = false  // Wurde direkt gelöscht
+                    )
+                }
+
+                // Auch aus pending entfernen falls vorhanden
+                pendingPlayers.removeAll { it.id == playerId }
+
             } catch (e: Exception) {
                 _state.update {
                     it.copy(error = "Fehler beim Löschen: ${e.message}")
@@ -112,46 +147,77 @@ class TeamSelectViewModel : ViewModel() {
         }
     }
 
-    private fun changeTeam(playerId: Long, teamId: Long) {
-        viewModelScope.launch {
-            try {
-                val player = _state.value.players
-                    .find { it.player.id == playerId }?.player ?: return@launch
+    private fun removePlayerByName(name: String) {
+        // Für neue Spieler ohne ID: nur lokal entfernen
+        _state.update { s ->
+            s.copy(
+                players = s.players.filterNot { it.player.name == name }
+                // hasChanges bleibt wie es ist
+            )
+        }
 
-                val updated = player.copy(team = teamId)
-                api.updatePlayer(playerId, updated)
+        // Aus pending entfernen
+        pendingPlayers.removeAll { it.name == name }
+    }
 
-                loadData()
-            } catch (e: Exception) {
-                _state.update {
-                    it.copy(error = "Fehler beim Team-Wechsel: ${e.message}")
+    private fun changeTeamLocally(playerId: Long, teamId: Long) {
+        _state.update { s ->
+            val updatedPlayers = s.players.map { playerWithTeam ->
+                if (playerWithTeam.player.id == playerId) {
+                    val updatedPlayer = playerWithTeam.player.copy(team = teamId)
+                    val newTeam = s.teams.find { it.id == teamId }
+                    PlayerWithTeam(updatedPlayer, newTeam)
+                } else {
+                    playerWithTeam
                 }
             }
+            s.copy(players = updatedPlayers, hasChanges = true)
         }
     }
 
-    private fun assignRandomTeams() {
-        val s = _state.value
-        if (s.players.isEmpty() || s.teams.isEmpty()) return
-
+    private fun saveToBackend() {
         viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, error = null) }
+
             try {
-                val teams = s.teams
-                val shuffled = s.players.shuffled()
-
-                shuffled.forEachIndexed { idx, playerWithTeam ->
-                    val player = playerWithTeam.player
-                    val newTeamId = teams[idx % teams.size].id ?: return@forEachIndexed
-
-                    player.id?.let { playerId ->
-                        api.updatePlayer(playerId, player.copy(team = newTeamId))
+                // MOCK: Verwende MockRepository
+                // Neue Spieler speichern
+                if (pendingPlayers.isNotEmpty()) {
+                    pendingPlayers.forEach { player ->
+                        MockRepository.createPlayer(player)
                     }
+                    pendingPlayers.clear()
+                }
+
+                // Bestehende Spieler updaten (Team-Zuweisungen)
+                _state.value.players
+                    .filter { it.player.id != null }
+                    .forEach { playerWithTeam ->
+                        val player = playerWithTeam.player
+                        player.id?.let { id ->
+                            MockRepository.updatePlayer(id, player)
+                        }
+                    }
+
+                MockRepository.printDebugInfo()
+
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        hasChanges = false,
+                        successMessage = "Erfolgreich gespeichert!",
+                        error = null
+                    )
                 }
 
                 loadData()
+
             } catch (e: Exception) {
                 _state.update {
-                    it.copy(error = "Fehler beim Zuweisen: ${e.message}")
+                    it.copy(
+                        error = "Fehler beim Speichern: ${e.message}",
+                        isLoading = false
+                    )
                 }
             }
         }

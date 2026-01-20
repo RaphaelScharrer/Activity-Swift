@@ -8,6 +8,8 @@ data class TeamSelectState(
     val players: List<PlayerWithTeam> = emptyList(),
     val teams: List<Team> = emptyList(),
     val error: String? = null,
+    val successMessage: String? = null,
     val isLoading: Boolean = false,
-    val selectedTeamId: Long? = null
+    val selectedTeamId: Long? = null,
+    val hasChanges: Boolean = false
 )

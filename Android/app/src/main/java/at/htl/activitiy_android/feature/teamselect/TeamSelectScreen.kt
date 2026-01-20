@@ -19,13 +19,37 @@ import at.htl.activitiy_android.domain.model.Team
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TeamSelectScreen(
+fun PlayerCreationScreen(
     vm: TeamSelectViewModel = viewModel()
 ) {
     val state by vm.state.collectAsState()
 
+    LaunchedEffect(Unit) {
+        vm.onEvent(TeamSelectEvent.LoadData)
+    }
+
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Teamzuweisung") }) }
+        topBar = {
+            TopAppBar(title = { Text("Spieler erstellen") })
+        },
+        bottomBar = {
+            if (state.hasChanges) {
+                Surface(
+                    tonalElevation = 3.dp,
+                    shadowElevation = 8.dp
+                ) {
+                    Button(
+                        onClick = { vm.onEvent(TeamSelectEvent.SaveTeamsAndPlayers) },
+                        enabled = !state.isLoading,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Text("Speichern")
+                    }
+                }
+            }
+        }
     ) { padding ->
         Box(
             modifier = Modifier
@@ -64,40 +88,70 @@ fun TeamSelectScreen(
                                 DropdownMenuItem(
                                     text = { Text(team.label) },
                                     onClick = {
-                                        vm.onEvent(TeamSelectEvent.NameChanged(state.nameInput))
+                                        team.id?.let {
+                                            vm.onEvent(TeamSelectEvent.SelectTeam(it))
+                                        }
                                         expanded = false
                                     }
                                 )
                             }
                         }
                     }
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(16.dp))
+                } else {
+                    // Keine Teams vorhanden
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        )
+                    ) {
+                        Text(
+                            "Keine Teams gefunden. Bitte zuerst Teams erstellen!",
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                    Spacer(Modifier.height(16.dp))
                 }
 
-                // Input row
+                // Input row - Spieler hinzufügen
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     OutlinedTextField(
                         value = state.nameInput,
                         onValueChange = { vm.onEvent(TeamSelectEvent.NameChanged(it)) },
                         label = { Text("Spielername") },
+                        placeholder = { Text("z.B. Max Mustermann") },
                         singleLine = true,
                         modifier = Modifier.weight(1f),
-                        enabled = !state.isLoading
+                        enabled = !state.isLoading && state.teams.isNotEmpty()
                     )
                     Spacer(Modifier.width(8.dp))
                     Button(
                         onClick = { vm.onEvent(TeamSelectEvent.AddPlayer) },
-                        enabled = !state.isLoading
+                        enabled = !state.isLoading &&
+                                state.nameInput.isNotBlank() &&
+                                state.teams.isNotEmpty()
                     ) {
                         Text("Hinzufügen")
                     }
+                }
+
+                // Success Message
+                if (state.successMessage != null) {
+                    Spacer(Modifier.height(8.dp))
+                    AssistChip(
+                        onClick = { vm.onEvent(TeamSelectEvent.ClearMessages) },
+                        label = { Text(state.successMessage ?: "") },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                        )
+                    )
                 }
 
                 // Error
                 if (state.error != null) {
                     Spacer(Modifier.height(8.dp))
                     AssistChip(
-                        onClick = { vm.onEvent(TeamSelectEvent.ClearError) },
+                        onClick = { vm.onEvent(TeamSelectEvent.ClearMessages) },
                         label = { Text(state.error ?: "") },
                         colors = AssistChipDefaults.assistChipColors(
                             containerColor = MaterialTheme.colorScheme.errorContainer
@@ -107,20 +161,8 @@ fun TeamSelectScreen(
 
                 Spacer(Modifier.height(16.dp))
 
-                // List header + random assign
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Spieler (${state.players.size})", fontWeight = FontWeight.SemiBold)
-                    TextButton(
-                        onClick = { vm.onEvent(TeamSelectEvent.AssignRandomTeams) },
-                        enabled = !state.isLoading && state.players.isNotEmpty()
-                    ) {
-                        Text("Random Teams")
-                    }
-                }
+                // List header
+                Text("Spieler (${state.players.size})", fontWeight = FontWeight.SemiBold)
 
                 Spacer(Modifier.height(8.dp))
 
@@ -135,7 +177,7 @@ fun TeamSelectScreen(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(state.players, key = { it.player.id ?: 0 }) { playerWithTeam ->
+                        items(state.players, key = { it.player.id ?: it.player.name }) { playerWithTeam ->
                             PlayerRow(
                                 playerWithTeam = playerWithTeam,
                                 teams = state.teams,
@@ -158,9 +200,14 @@ fun TeamSelectScreen(
 
             // Loading overlay
             if (state.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
             }
         }
     }
