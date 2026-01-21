@@ -1,0 +1,40 @@
+### Alle Spieler abrufen
+GET http://localhost:8080/api/players
+
+### Spieler nach ID abrufen
+GET http://localhost:8080/api/players/1
+
+### Spieler nach Team-ID abrufen
+GET http://localhost:8080/api/players/team/1
+
+### Neuen Spieler erstellen (mit Team)
+POST http://localhost:8080/api/players
+Content-Type: application/json
+
+{
+  "name": "Max Mustermann",
+  "team": 1,
+  "pointsEarned": 100
+}
+
+### Neuen Spieler erstellen (ohne Team)
+POST http://localhost:8080/api/players
+Content-Type: application/json
+
+{
+  "name": "Lisa Beispiel",
+  "pointsEarned": 50
+}
+
+### Spieler aktualisieren
+PUT http://localhost:8080/api/players/1
+Content-Type: application/json
+
+{
+  "name": "Max Mustermann Updated",
+  "team": 2,
+  "pointsEarned": 150
+}
+
+### Spieler löschen
+DELETE http://localhost:8080/api/players/1
