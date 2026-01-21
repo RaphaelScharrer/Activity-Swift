@@ -1,0 +1,32 @@
+### Alle Teams abrufen
+GET http://localhost:8080/api/teams
+
+### Team nach ID abrufen
+GET http://localhost:8080/api/teams/1
+
+### Neues Team erstellen
+POST http://localhost:8080/api/teams
+Content-Type: application/json
+
+{
+  "position": 1
+}
+
+### Weiteres Team erstellen
+POST http://localhost:8080/api/teams
+Content-Type: application/json
+
+{
+  "position": 2
+}
+
+### Team aktualisieren
+PUT http://localhost:8080/api/teams/1
+Content-Type: application/json
+
+{
+  "position": 5
+}
+
+### Team löschen
+DELETE http://localhost:8080/api/teams/1

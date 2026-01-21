@@ -26,15 +26,15 @@ public class WordResource {
     public Response getAllWords() {
         try {
             List<WordDTO> words = Word.streamAll()
-                .map(WordDTO::from)
-                .toList();
-            
+                    .map(WordDTO::from)
+                    .toList();
+
             return Response.ok(words).build();
         } catch (Exception e) {
             return Response
-                .status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(ErrorResponse.of(500, "Fehler beim Laden der Wörter", uriInfo.getPath()))
-                .build();
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(ErrorResponse.of(500, "Fehler beim Laden der Wörter", uriInfo.getPath()))
+                    .build();
         }
     }
 
@@ -42,15 +42,37 @@ public class WordResource {
     @Path("/{id}")
     public Response getWord(@PathParam("id") Long id) {
         Word word = Word.findById(id);
-        
+
         if (word == null) {
             return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity(ErrorResponse.of(404, "Wort mit ID " + id + " nicht gefunden", uriInfo.getPath()))
-                .build();
+                    .status(Response.Status.NOT_FOUND)
+                    .entity(ErrorResponse.of(404, "Wort mit ID " + id + " nicht gefunden", uriInfo.getPath()))
+                    .build();
         }
-        
+
         return Response.ok(WordDTO.from(word)).build();
+    }
+
+    @GET
+    @Path("/random")
+    public Response getRandomWord() {
+        try {
+            Word word = Word.findRandomWord();
+
+            if (word == null) {
+                return Response
+                        .status(Response.Status.NOT_FOUND)
+                        .entity(ErrorResponse.of(404, "Keine Wörter in der Datenbank vorhanden", uriInfo.getPath()))
+                        .build();
+            }
+
+            return Response.ok(WordDTO.from(word)).build();
+        } catch (Exception e) {
+            return Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(ErrorResponse.of(500, "Fehler beim Laden eines zufälligen Worts", uriInfo.getPath()))
+                    .build();
+        }
     }
 
     @GET
@@ -58,15 +80,15 @@ public class WordResource {
     public Response getWordsByMinPoints(@PathParam("points") Integer minPoints) {
         try {
             List<WordDTO> words = Word.streamByMinPoints(minPoints)
-                .map(WordDTO::from)
-                .toList();
-            
+                    .map(WordDTO::from)
+                    .toList();
+
             return Response.ok(words).build();
         } catch (Exception e) {
             return Response
-                .status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(ErrorResponse.of(500, "Fehler beim Laden der Wörter", uriInfo.getPath()))
-                .build();
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(ErrorResponse.of(500, "Fehler beim Laden der Wörter", uriInfo.getPath()))
+                    .build();
         }
     }
 
@@ -77,33 +99,33 @@ public class WordResource {
             // Validierung: Wort und Definition dürfen nicht leer sein
             if (dto.word() == null || dto.word().trim().isEmpty()) {
                 return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity(ErrorResponse.of(400, "Wort darf nicht leer sein", uriInfo.getPath()))
-                    .build();
+                        .status(Response.Status.BAD_REQUEST)
+                        .entity(ErrorResponse.of(400, "Wort darf nicht leer sein", uriInfo.getPath()))
+                        .build();
             }
 
             if (dto.definition() == null || dto.definition().trim().isEmpty()) {
                 return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity(ErrorResponse.of(400, "Definition darf nicht leer sein", uriInfo.getPath()))
-                    .build();
+                        .status(Response.Status.BAD_REQUEST)
+                        .entity(ErrorResponse.of(400, "Definition darf nicht leer sein", uriInfo.getPath()))
+                        .build();
             }
 
             // Validierung: Punkte müssen positiv sein
             if (dto.points() == null || dto.points() < 0) {
                 return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity(ErrorResponse.of(400, "Punkte müssen mindestens 0 sein", uriInfo.getPath()))
-                    .build();
+                        .status(Response.Status.BAD_REQUEST)
+                        .entity(ErrorResponse.of(400, "Punkte müssen mindestens 0 sein", uriInfo.getPath()))
+                        .build();
             }
 
             // Prüfen ob Wort bereits existiert
             Word existing = Word.findByWord(dto.word());
             if (existing != null) {
                 return Response
-                    .status(Response.Status.CONFLICT)
-                    .entity(ErrorResponse.of(409, "Wort '" + dto.word() + "' existiert bereits", uriInfo.getPath()))
-                    .build();
+                        .status(Response.Status.CONFLICT)
+                        .entity(ErrorResponse.of(409, "Wort '" + dto.word() + "' existiert bereits", uriInfo.getPath()))
+                        .build();
             }
 
             Word word = dto.toEntity();
@@ -111,15 +133,15 @@ public class WordResource {
 
             URI location = uriInfo.getAbsolutePathBuilder().path(word.id.toString()).build();
             return Response
-                .created(location)
-                .entity(WordDTO.from(word))
-                .build();
+                    .created(location)
+                    .entity(WordDTO.from(word))
+                    .build();
 
         } catch (Exception e) {
             return Response
-                .status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(ErrorResponse.of(500, "Fehler beim Erstellen des Worts: " + e.getMessage(), uriInfo.getPath()))
-                .build();
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(ErrorResponse.of(500, "Fehler beim Erstellen des Worts: " + e.getMessage(), uriInfo.getPath()))
+                    .build();
         }
     }
 
@@ -128,12 +150,12 @@ public class WordResource {
     @Transactional
     public Response updateWord(@PathParam("id") Long id, @Valid WordDTO dto) {
         Word word = Word.findById(id);
-        
+
         if (word == null) {
             return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity(ErrorResponse.of(404, "Wort mit ID " + id + " nicht gefunden", uriInfo.getPath()))
-                .build();
+                    .status(Response.Status.NOT_FOUND)
+                    .entity(ErrorResponse.of(404, "Wort mit ID " + id + " nicht gefunden", uriInfo.getPath()))
+                    .build();
         }
 
         try {
@@ -143,9 +165,9 @@ public class WordResource {
                 Word existing = Word.findByWord(dto.word());
                 if (existing != null && !existing.id.equals(id)) {
                     return Response
-                        .status(Response.Status.CONFLICT)
-                        .entity(ErrorResponse.of(409, "Wort '" + dto.word() + "' existiert bereits", uriInfo.getPath()))
-                        .build();
+                            .status(Response.Status.CONFLICT)
+                            .entity(ErrorResponse.of(409, "Wort '" + dto.word() + "' existiert bereits", uriInfo.getPath()))
+                            .build();
                 }
                 word.word = dto.word();
             }
@@ -165,9 +187,9 @@ public class WordResource {
 
         } catch (Exception e) {
             return Response
-                .status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(ErrorResponse.of(500, "Fehler beim Aktualisieren des Worts: " + e.getMessage(), uriInfo.getPath()))
-                .build();
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(ErrorResponse.of(500, "Fehler beim Aktualisieren des Worts: " + e.getMessage(), uriInfo.getPath()))
+                    .build();
         }
     }
 
@@ -176,12 +198,12 @@ public class WordResource {
     @Transactional
     public Response deleteWord(@PathParam("id") Long id) {
         Word word = Word.findById(id);
-        
+
         if (word == null) {
             return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity(ErrorResponse.of(404, "Wort mit ID " + id + " nicht gefunden", uriInfo.getPath()))
-                .build();
+                    .status(Response.Status.NOT_FOUND)
+                    .entity(ErrorResponse.of(404, "Wort mit ID " + id + " nicht gefunden", uriInfo.getPath()))
+                    .build();
         }
 
         try {
@@ -189,9 +211,9 @@ public class WordResource {
             return Response.noContent().build();
         } catch (Exception e) {
             return Response
-                .status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(ErrorResponse.of(500, "Fehler beim Löschen des Worts: " + e.getMessage(), uriInfo.getPath()))
-                .build();
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(ErrorResponse.of(500, "Fehler beim Löschen des Worts: " + e.getMessage(), uriInfo.getPath()))
+                    .build();
         }
     }
 }

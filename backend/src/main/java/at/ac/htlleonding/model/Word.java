@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 
+import java.util.Random;
 import java.util.stream.Stream;
 
 @Entity
@@ -33,6 +34,15 @@ public class Word extends PanacheEntity {
 
     public static Stream<Word> streamByMinPoints(Integer minPoints) {
         return stream("points >= ?1 ORDER BY points DESC", minPoints);
+    }
+
+    public static Word findRandomWord() {
+        long count = count();
+        if (count == 0) {
+            return null;
+        }
+        int randomIndex = new Random().nextInt((int) count);
+        return findAll().page(randomIndex, 1).firstResult();
     }
 
     public static void deleteAllWords() {
