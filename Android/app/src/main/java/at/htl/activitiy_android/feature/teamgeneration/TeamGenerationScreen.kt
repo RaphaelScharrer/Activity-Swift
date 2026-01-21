@@ -168,6 +168,7 @@ fun TeamGenerationScreen(
             }
 
             // Loading overlay
+            /*
             if (state.isLoading) {
                 Box(
                     modifier = Modifier
@@ -178,6 +179,8 @@ fun TeamGenerationScreen(
                     CircularProgressIndicator()
                 }
             }
+
+             */
         }
     }
 }

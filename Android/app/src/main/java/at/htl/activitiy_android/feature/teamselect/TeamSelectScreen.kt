@@ -98,7 +98,9 @@ fun PlayerCreationScreen(
                         }
                     }
                     Spacer(Modifier.height(16.dp))
-                } else {
+                }
+                /*
+                else {
                     // Keine Teams vorhanden
                     Card(
                         colors = CardDefaults.cardColors(
@@ -112,6 +114,8 @@ fun PlayerCreationScreen(
                     }
                     Spacer(Modifier.height(16.dp))
                 }
+
+                 */
 
                 // Input row - Spieler hinzufügen
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -199,6 +203,7 @@ fun PlayerCreationScreen(
             }
 
             // Loading overlay
+            /*
             if (state.isLoading) {
                 Box(
                     modifier = Modifier
@@ -209,6 +214,8 @@ fun PlayerCreationScreen(
                     CircularProgressIndicator()
                 }
             }
+
+             */
         }
     }
 }
