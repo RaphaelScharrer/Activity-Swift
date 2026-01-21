@@ -3,7 +3,7 @@ package at.htl.activitiy_android.feature.teamgeneration
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import at.htl.activitiy_android.data.api.MockRepository
-// import at.htl.activitiy_android.data.api.RetrofitInstance
+import at.htl.activitiy_android.data.api.RetrofitInstance
 import at.htl.activitiy_android.domain.model.Team
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 class TeamGenerationViewModel : ViewModel() {
 
     // MOCK: Verwende MockRepository statt echtem Backend
-    // private val api = RetrofitInstance.api
+    private val api = RetrofitInstance.api
 
     private val _state = MutableStateFlow(TeamGenerationState())
     val state: StateFlow<TeamGenerationState> = _state
@@ -79,7 +79,7 @@ class TeamGenerationViewModel : ViewModel() {
 
                 _state.value.teams.forEach { team ->
                     // MOCK: Verwende MockRepository
-                    val saved = MockRepository.createTeam(team)
+                    val saved = api.createTeam(team)
                     savedTeams.add(saved)
                 }
 

@@ -3,10 +3,9 @@ package at.htl.activitiy_android.feature.teamselect
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import at.htl.activitiy_android.data.api.MockRepository
-// import at.htl.activitiy_android.data.api.RetrofitInstance
+import at.htl.activitiy_android.data.api.RetrofitInstance
 import at.htl.activitiy_android.domain.model.Player
 import at.htl.activitiy_android.domain.model.PlayerWithTeam
-import at.htl.activitiy_android.domain.model.Team
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -15,7 +14,7 @@ import kotlinx.coroutines.launch
 class TeamSelectViewModel : ViewModel() {
 
     // MOCK: Verwende MockRepository statt echtem Backend
-    // private val api = RetrofitInstance.api
+    private val api = RetrofitInstance.api
 
     private val _state = MutableStateFlow(TeamSelectState())
     val state: StateFlow<TeamSelectState> = _state
@@ -50,8 +49,8 @@ class TeamSelectViewModel : ViewModel() {
             _state.update { it.copy(isLoading = true) }
             try {
                 // MOCK: Verwende MockRepository
-                val teams = MockRepository.getAllTeams()
-                val players = MockRepository.getAllPlayers()
+                val teams = api.getAllTeams()
+                val players = api.getAllPlayers()
 
                 val playersWithTeams = players.map { player ->
                     PlayerWithTeam(
@@ -128,7 +127,7 @@ class TeamSelectViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 // Nur vom Backend löschen, wenn Player dort existiert
-                MockRepository.deletePlayer(playerId)
+                api.deletePlayer(playerId)
 
                 _state.update { s ->
                     s.copy(
@@ -178,7 +177,7 @@ class TeamSelectViewModel : ViewModel() {
                 // Neue Spieler speichern
                 if (pendingPlayers.isNotEmpty()) {
                     pendingPlayers.forEach { player ->
-                        MockRepository.createPlayer(player)
+                        api.createPlayer(player)
                     }
                     pendingPlayers.clear()
                 }
@@ -189,7 +188,7 @@ class TeamSelectViewModel : ViewModel() {
                     .forEach { playerWithTeam ->
                         val player = playerWithTeam.player
                         player.id?.let { id ->
-                            MockRepository.updatePlayer(id, player)
+                            api.updatePlayer(id, player)
                         }
                     }
 
