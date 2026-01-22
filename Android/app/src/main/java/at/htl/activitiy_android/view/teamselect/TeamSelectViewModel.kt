@@ -1,8 +1,8 @@
-package at.htl.activitiy_android.feature.teamselect
+package at.htl.activitiy_android.view.teamselect
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import at.htl.activitiy_android.data.api.MockRepository
 import at.htl.activitiy_android.data.api.RetrofitInstance
 import at.htl.activitiy_android.domain.model.Player
 import at.htl.activitiy_android.domain.model.PlayerWithTeam
@@ -11,9 +11,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class TeamSelectViewModel : ViewModel() {
+class TeamSelectViewModel(
+    private val gameId: Long  // ← NEU: Game-ID als Parameter
+) : ViewModel() {
 
-    // MOCK: Verwende MockRepository statt echtem Backend
     private val api = RetrofitInstance.api
 
     private val _state = MutableStateFlow(TeamSelectState())
@@ -48,9 +49,14 @@ class TeamSelectViewModel : ViewModel() {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             try {
-                // MOCK: Verwende MockRepository
-                val teams = api.getAllTeams()
-                val players = api.getAllPlayers()
+                // ✅ Nur Teams des aktuellen Games laden
+                val teams = api.getTeamsByGame(gameId)
+
+                // Alle Spieler laden und filtern (falls nötig)
+                val allPlayers = api.getAllPlayers()
+                val players = allPlayers.filter { player ->
+                    teams.any { it.id == player.team }
+                }
 
                 val playersWithTeams = players.map { player ->
                     PlayerWithTeam(
@@ -126,7 +132,6 @@ class TeamSelectViewModel : ViewModel() {
     private fun removePlayerLocally(playerId: Long) {
         viewModelScope.launch {
             try {
-                // Nur vom Backend löschen, wenn Player dort existiert
                 api.deletePlayer(playerId)
 
                 _state.update { s ->
@@ -147,7 +152,7 @@ class TeamSelectViewModel : ViewModel() {
         _state.update { s ->
             s.copy(
                 players = s.players.filterNot { it.player.name == name },
-                hasChanges = true  // Änderung markieren
+                hasChanges = true
             )
         }
         pendingPlayers.removeAll { it.name == name }
@@ -173,7 +178,6 @@ class TeamSelectViewModel : ViewModel() {
             _state.update { it.copy(isLoading = true, error = null) }
 
             try {
-                // MOCK: Verwende MockRepository
                 // Neue Spieler speichern
                 if (pendingPlayers.isNotEmpty()) {
                     pendingPlayers.forEach { player ->
@@ -182,7 +186,7 @@ class TeamSelectViewModel : ViewModel() {
                     pendingPlayers.clear()
                 }
 
-                // Bestehende Spieler updaten (Team-Zuweisungen)
+                // Bestehende Spieler updaten
                 _state.value.players
                     .filter { it.player.id != null }
                     .forEach { playerWithTeam ->
@@ -191,8 +195,6 @@ class TeamSelectViewModel : ViewModel() {
                             api.updatePlayer(id, player)
                         }
                     }
-
-                MockRepository.printDebugInfo()
 
                 _state.update {
                     it.copy(
@@ -230,10 +232,22 @@ class TeamSelectViewModel : ViewModel() {
             s.copy(players = updatedPlayers, hasChanges = true)
         }
 
-        // Auch in pendingPlayers aktualisieren
         val index = pendingPlayers.indexOfFirst { it.name == playerName }
         if (index != -1) {
             pendingPlayers[index] = pendingPlayers[index].copy(team = teamId)
         }
+    }
+}
+
+// ✅ Factory für ViewModel mit gameId Parameter
+class TeamSelectViewModelFactory(
+    private val gameId: Long
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(TeamSelectViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return TeamSelectViewModel(gameId) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

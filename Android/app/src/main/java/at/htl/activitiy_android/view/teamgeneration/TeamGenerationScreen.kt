@@ -1,4 +1,4 @@
-package at.htl.activitiy_android.feature.teamgeneration
+package at.htl.activitiy_android.view.teamgeneration
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -17,8 +17,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TeamGenerationScreen(
+    gameId: Long,  // ← NEU: Game-ID als Parameter
     onTeamsCreated: () -> Unit,
-    vm: TeamGenerationViewModel = viewModel()
+    vm: TeamGenerationViewModel = viewModel(
+        factory = TeamGenerationViewModelFactory(gameId)  // ← Factory mit gameId
+    )
 ) {
     val state by vm.state.collectAsState()
 
@@ -168,7 +171,6 @@ fun TeamGenerationScreen(
             }
 
             // Loading overlay
-            /*
             if (state.isLoading) {
                 Box(
                     modifier = Modifier
@@ -179,8 +181,6 @@ fun TeamGenerationScreen(
                     CircularProgressIndicator()
                 }
             }
-
-             */
         }
     }
 }

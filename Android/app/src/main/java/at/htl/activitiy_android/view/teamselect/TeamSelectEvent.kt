@@ -1,4 +1,4 @@
-package at.htl.activitiy_android.feature.teamselect
+package at.htl.activitiy_android.view.teamselect
 
 sealed interface TeamSelectEvent {
     data class NameChanged(val value: String) : TeamSelectEvent

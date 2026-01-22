@@ -1,8 +1,8 @@
-package at.htl.activitiy_android.feature.teamgeneration
+package at.htl.activitiy_android.view.teamgeneration
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import at.htl.activitiy_android.data.api.MockRepository
 import at.htl.activitiy_android.data.api.RetrofitInstance
 import at.htl.activitiy_android.domain.model.Team
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,11 +10,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+class TeamGenerationViewModel(
+    private val gameId: Long  // ← NEU: Game-ID als Parameter
+) : ViewModel() {
 
-
-class TeamGenerationViewModel : ViewModel() {
-
-    // MOCK: Verwende MockRepository statt echtem Backend
     private val api = RetrofitInstance.api
 
     private val _state = MutableStateFlow(TeamGenerationState())
@@ -56,7 +55,9 @@ class TeamGenerationViewModel : ViewModel() {
         val newTeams = (0 until count).map { i ->
             Team(
                 id = null,
-                position = i.toLong()
+                position = i.toLong(),
+                gameId = gameId,  // ← Game-ID setzen!
+                players = null
             )
         }
 
@@ -78,12 +79,10 @@ class TeamGenerationViewModel : ViewModel() {
                 val savedTeams = mutableListOf<Team>()
 
                 _state.value.teams.forEach { team ->
-                    // MOCK: Verwende MockRepository
+                    // Team hat bereits gameId durch generateTeams()
                     val saved = api.createTeam(team)
                     savedTeams.add(saved)
                 }
-
-                MockRepository.printDebugInfo()
 
                 _state.update {
                     it.copy(
@@ -105,5 +104,18 @@ class TeamGenerationViewModel : ViewModel() {
                 }
             }
         }
+    }
+}
+
+// ✅ Factory für ViewModel mit gameId Parameter
+class TeamGenerationViewModelFactory(
+    private val gameId: Long
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(TeamGenerationViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return TeamGenerationViewModel(gameId) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

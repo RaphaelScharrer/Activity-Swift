@@ -1,4 +1,4 @@
-package at.htl.activitiy_android.feature.teamselect
+package at.htl.activitiy_android.view.teamselect
 
 import at.htl.activitiy_android.domain.model.PlayerWithTeam
 import at.htl.activitiy_android.domain.model.Team

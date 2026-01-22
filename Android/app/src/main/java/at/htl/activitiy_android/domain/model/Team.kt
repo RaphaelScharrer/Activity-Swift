@@ -4,7 +4,9 @@ import androidx.compose.ui.graphics.Color
 
 data class Team(
     val id: Long? = null,
-    val position: Long = 0
+    val position: Long = 0,
+    val gameId: Long? = null, //Fk to Game
+    val players: List<Player>? = null
 ) {
     // UI-Helper für Farben basierend auf Position
     val color: Color
