@@ -1,0 +1,48 @@
+@startuml
+title Activity-App-Ablauf
+
+start
+:Spielmodus wählen;
+
+if (Lokal oder Online?) then (Lokal)
+
+    if (Spiel laden oder erstellen?) then (Laden)
+        :Spiel fortsetzen;
+    else (Erstellen)
+        :Neues Spiel erstellen;
+        :Teams anlegen;
+    :Spieler anlegen;
+    endif
+
+else (Online)
+
+    if (Spiel beitreten oder erstellen?) then (Beitreten)
+        :Code eingeben | In Spiel-Liste suchen (wenn öffentlich);
+        :Spiel beitreten;
+        :Spielernamen eingeben;
+        :Team wählen;
+    else (Erstellen)
+        if (Privates oder öffentliches Spiel erstellen) then (Privat)
+        :Einladungscode generieren;
+    else (Öffentlich)
+        :Spielname in Online-Liste anzeigen + Einladungscode;
+    endif
+    
+    endif
+
+endif
+
+    :Host startet Spiel;
+
+repeat :Spieler x aus Team y erhält Wort je nach Feld;
+
+    if (Team y errät das Wort?) then (Ja)
+        :Team y erhöht Position um Punkteanzahl des Wortes;
+    else (Nein)
+        :Team y bleibt an ihrer Position;
+    endif
+    repeat while (Ziel-Feld erreicht) is (Nein)
+    
+    :Statistik anzeigen;
+  stop
+@enduml

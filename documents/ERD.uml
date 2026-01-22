@@ -1,0 +1,37 @@
+@startuml
+entity Word {
+  + id : Long <<PK>>
+  --
+  word : String
+  definition : String
+  points : Integer
+  category: enum
+}
+
+entity Player {
+  + id : Long <<PK>>
+  --
+  teamId : Long <<FK>>
+  name : String
+  pointsEarned : Long
+}
+
+entity Team {
+  + id : Long <<PK>>
+  --
+  gameId : Long <<FK>>
+  position: Long
+}
+
+entity Game {
+  + id : Long <<PK>>
+  --
+  name : String
+  createdOn : DateTime
+}
+
+Team "1"---"*" Player
+Game "1"---"*" Team
+
+
+@enduml
