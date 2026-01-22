@@ -10,4 +10,3 @@ data class TeamGenerationState(
     val isLoading: Boolean = false,
     val hasChanges: Boolean = false
 )
-
