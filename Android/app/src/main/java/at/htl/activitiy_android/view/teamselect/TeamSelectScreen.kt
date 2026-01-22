@@ -1,4 +1,4 @@
-package at.htl.activitiy_android.feature.teamselect
+package at.htl.activitiy_android.view.teamselect
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,7 +20,10 @@ import at.htl.activitiy_android.domain.model.Team
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlayerCreationScreen(
-    vm: TeamSelectViewModel = viewModel()
+    gameId: Long,  // ← NEU: Game-ID als Parameter
+    vm: TeamSelectViewModel = viewModel(
+        factory = TeamSelectViewModelFactory(gameId)  // ← Factory mit gameId
+    )
 ) {
     val state by vm.state.collectAsState()
 
@@ -99,23 +102,6 @@ fun PlayerCreationScreen(
                     }
                     Spacer(Modifier.height(16.dp))
                 }
-                /*
-                else {
-                    // Keine Teams vorhanden
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        )
-                    ) {
-                        Text(
-                            "Keine Teams gefunden. Bitte zuerst Teams erstellen!",
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    }
-                    Spacer(Modifier.height(16.dp))
-                }
-
-                 */
 
                 // Input row - Spieler hinzufügen
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -203,7 +189,6 @@ fun PlayerCreationScreen(
             }
 
             // Loading overlay
-            /*
             if (state.isLoading) {
                 Box(
                     modifier = Modifier
@@ -214,8 +199,6 @@ fun PlayerCreationScreen(
                     CircularProgressIndicator()
                 }
             }
-
-             */
         }
     }
 }

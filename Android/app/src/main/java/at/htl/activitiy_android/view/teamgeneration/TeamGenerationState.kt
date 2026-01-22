@@ -1,4 +1,4 @@
-package at.htl.activitiy_android.feature.teamgeneration
+package at.htl.activitiy_android.view.teamgeneration
 
 import at.htl.activitiy_android.domain.model.Team
 

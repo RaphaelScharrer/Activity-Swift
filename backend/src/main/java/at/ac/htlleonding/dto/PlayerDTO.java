@@ -22,7 +22,7 @@ public record PlayerDTO(
         Player player = new Player();
         player.id = this.id;
         player.name = this.name;
-        player.pointsEarned = this.pointsEarned != null ? this.pointsEarned : 0L;
+        player.pointsEarned = this.pointsEarned != null ? this.pointsEarned : (Long) 0L;
         player.team = team;
         return player;
     }

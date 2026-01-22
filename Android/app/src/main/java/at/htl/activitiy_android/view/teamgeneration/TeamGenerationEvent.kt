@@ -1,4 +1,4 @@
-package at.htl.activitiy_android.feature.teamgeneration
+package at.htl.activitiy_android.view.teamgeneration
 
 sealed interface TeamGenerationEvent {
     data class TeamCountChanged(val value: String) : TeamGenerationEvent
