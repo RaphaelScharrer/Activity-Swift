@@ -76,6 +76,28 @@ public class WordResource {
     }
 
     @GET
+    @Path("/random/{category}")
+    public Response getRandomWordByCategory(@PathParam("category") Word.WordCategory category) {
+        try {
+            Word word = Word.findRandomWordByCategory(category);
+
+            if (word == null) {
+                return Response
+                        .status(Response.Status.NOT_FOUND)
+                        .entity(ErrorResponse.of(404, "Keine Wörter in der Kategorie " + category + " gefunden", uriInfo.getPath()))
+                        .build();
+            }
+
+            return Response.ok(WordDTO.from(word)).build();
+        } catch (Exception e) {
+            return Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(ErrorResponse.of(500, "Fehler beim Laden eines zufälligen Worts", uriInfo.getPath()))
+                    .build();
+        }
+    }
+
+    @GET
     @Path("/minpoints/{points}")
     public Response getWordsByMinPoints(@PathParam("points") Integer minPoints) {
         try {
@@ -180,6 +202,11 @@ public class WordResource {
             // Punkte aktualisieren
             if (dto.points() != null && dto.points() >= 0) {
                 word.points = dto.points();
+            }
+
+            // Kategorie aktualisieren
+            if (dto.category() != null) {
+                word.category = dto.category();
             }
 
             word.persist();

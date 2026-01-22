@@ -1,0 +1,27 @@
+### Get all games
+GET http://localhost:8080/games
+
+### Get game by ID
+GET http://localhost:8080/games/1
+
+### Create new game
+POST http://localhost:8080/games
+Content-Type: application/json
+
+{
+  "name": "Vocabulary Battle 2025"
+}
+
+### Update game
+PUT http://localhost:8080/games/1
+Content-Type: application/json
+
+{
+  "name": "Updated Game Name"
+}
+
+### Delete game by ID
+DELETE http://localhost:8080/games/1
+
+### Delete all games
+DELETE http://localhost:8080/games

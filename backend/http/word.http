@@ -1,0 +1,87 @@
+### Get all words
+GET http://localhost:8080/api/words
+
+### Get word by ID
+GET http://localhost:8080/api/words/1
+
+### Get random word
+GET http://localhost:8080/api/words/random
+
+### Get random word by category - DRAW
+GET http://localhost:8080/api/words/random/DRAW
+
+### Get random word by category - ACT
+GET http://localhost:8080/api/words/random/ACT
+
+### Get random word by category - DESCRIBE
+GET http://localhost:8080/api/words/random/DESCRIBE
+
+### Get words by category
+GET http://localhost:8080/api/words/category/DRAW
+
+### Get words by category - ACT
+GET http://localhost:8080/api/words/category/ACT
+
+### Get words by category - DESCRIBE
+GET http://localhost:8080/api/words/category/DESCRIBE
+
+### Create new word - DRAW
+POST http://localhost:8080/api/words
+Content-Type: application/json
+
+{
+  "word": "Apfel",
+  "definition": "Eine runde Frucht",
+  "points": 10,
+  "category": "DRAW"
+}
+
+### Create new word - ACT
+POST http://localhost:8080/api/words
+Content-Type: application/json
+
+{
+  "word": "Komplex",
+  "definition": "Vielschichtig und kompliziert",
+  "points": 25,
+  "category": "ACT"
+}
+
+### Create new word - DESCRIBE
+POST http://localhost:8080/api/words
+Content-Type: application/json
+
+{
+  "word": "Extraordinär",
+  "definition": "Außergewöhnlich bemerkenswert",
+  "points": 50,
+  "category": "DESCRIBE"
+}
+
+### Create new word - Example
+POST http://localhost:8080/api/words
+Content-Type: application/json
+
+{
+  "word": "Elefant",
+  "definition": "Großes graues Säugetier mit Rüssel",
+  "points": 15,
+  "category": "DRAW"
+}
+
+### Update word
+PUT http://localhost:8080/api/words/1
+Content-Type: application/json
+
+{
+  "word": "Apfel",
+  "definition": "Eine gesunde runde Frucht",
+  "points": 15,
+  "category": "DRAW"
+}
+
+### Delete word by ID
+DELETE http://localhost:8080/api/words/1
+
+### Delete all words
+DELETE http://localhost:8080/api/words

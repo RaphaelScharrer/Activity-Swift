@@ -1,40 +1,125 @@
-### Alle Spieler abrufen
-GET http://localhost:8080/api/players
+### ===================================
 
-### Spieler nach ID abrufen
-GET http://localhost:8080/api/players/1
+### Player Endpoints
 
-### Spieler nach Team-ID abrufen
-GET http://localhost:8080/api/players/team/1
+### Get all players
+GET http://localhost:8080/players
 
-### Neuen Spieler erstellen (mit Team)
-POST http://localhost:8080/api/players
+### Get player by ID
+GET http://localhost:8080/players/1
+
+### Create new player
+POST http://localhost:8080/players
 Content-Type: application/json
 
 {
   "name": "Max Mustermann",
-  "team": 1,
-  "pointsEarned": 100
+  "pointsEarned": 0,
+  "teamId": 1
 }
 
-### Neuen Spieler erstellen (ohne Team)
-POST http://localhost:8080/api/players
+### Create another player
+POST http://localhost:8080/players
 Content-Type: application/json
 
 {
-  "name": "Lisa Beispiel",
-  "pointsEarned": 50
+  "name": "Erika Musterfrau",
+  "pointsEarned": 150,
+  "teamId": 1
 }
 
-### Spieler aktualisieren
-PUT http://localhost:8080/api/players/1
+### Update player
+PUT http://localhost:8080/players/1
 Content-Type: application/json
 
 {
-  "name": "Max Mustermann Updated",
-  "team": 2,
-  "pointsEarned": 150
+  "name": "Max Mustermann",
+  "pointsEarned": 250,
+  "teamId": 1
 }
 
-### Spieler löschen
-DELETE http://localhost:8080/api/players/1
+### Delete player by ID
+DELETE http://localhost:8080/players/1
+
+### Delete all players
+DELETE http://localhost:8080/players
+
+### ===================================
+
+### Word Endpoints
+
+### Get all words
+GET http://localhost:8080/words
+
+### Get word by ID
+GET http://localhost:8080/words/1
+
+### Get words by category
+GET http://localhost:8080/words/category/EASY
+
+### Get words by category - MEDIUM
+GET http://localhost:8080/words/category/MEDIUM
+
+### Get words by category - HARD
+GET http://localhost:8080/words/category/HARD
+
+### Create new word - EASY
+POST http://localhost:8080/words
+Content-Type: application/json
+
+{
+  "word": "Apfel",
+  "definition": "Eine runde Frucht",
+  "points": 10,
+  "category": "EASY"
+}
+
+### Create new word - MEDIUM
+POST http://localhost:8080/words
+Content-Type: application/json
+
+{
+  "word": "Komplex",
+  "definition": "Vielschichtig und kompliziert",
+  "points": 25,
+  "category": "MEDIUM"
+}
+
+### Create new word - HARD
+POST http://localhost:8080/words
+Content-Type: application/json
+
+{
+  "word": "Extraordinär",
+  "definition": "Außergewöhnlich bemerkenswert",
+  "points": 50,
+  "category": "HARD"
+}
+
+### Create new word - EXPERT
+POST http://localhost:8080/words
+Content-Type: application/json
+
+{
+  "word": "Epistemologie",
+  "definition": "Die Lehre von der Erkenntnis",
+  "points": 100,
+  "category": "EXPERT"
+}
+
+### Update word
+PUT http://localhost:8080/words/1
+Content-Type: application/json
+
+{
+  "word": "Apfel",
+  "definition": "Eine gesunde runde Frucht",
+  "points": 15,
+  "category": "EASY"
+}
+
+### Delete word by ID
+DELETE http://localhost:8080/words/1
+
+### Delete all words
+DELETE http://localhost:8080/words

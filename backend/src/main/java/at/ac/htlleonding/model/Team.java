@@ -14,18 +14,20 @@ public class Team extends PanacheEntity {
     @NotNull
     @Min(0)
     @Column(nullable = false)
-    public Long position;
+    public Integer position;
 
-    // Beziehungen
     @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
     public List<Player> players;
 
-    // Panache Query Methods mit Streams
+    @ManyToOne
+    @JoinColumn(name = "game_id")
+    public Game game;
+
     public static Stream<Team> streamAll() {
         return stream("ORDER BY position");
     }
 
-    public static Team findByPosition(Long position) {
+    public static Team findByPosition(Integer position) {
         return find("position", position).firstResult();
     }
 

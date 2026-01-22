@@ -4,36 +4,43 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-
-import java.util.Random;
-import java.util.stream.Stream;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 public class Word extends PanacheEntity {
 
-    @NotBlank(message = "Wort darf nicht leer sein")
-    @Column(nullable = false, unique = true)
+    @NotBlank
+    @Column(nullable = false)
     public String word;
 
-    @NotBlank(message = "Definition darf nicht leer sein")
-    @Column(nullable = false, length = 1000)
     public String definition;
 
+    @NotNull
     @Min(0)
     @Column(nullable = false)
     public Integer points;
 
-    // Panache Query Methods mit Streams
-    public static Stream<Word> streamAll() {
-        return stream("ORDER BY word");
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    public WordCategory category;
+
+    public enum WordCategory {
+        DRAW,
+        ACT,
+        DESCRIBE
+    }
+
+    public static java.util.stream.Stream<Word> streamAll() {
+        return Word.<Word>listAll().stream();
+    }
+
+    public static java.util.stream.Stream<Word> streamByMinPoints(Integer minPoints) {
+        return Word.<Word>list("points >= ?1", minPoints).stream();
     }
 
     public static Word findByWord(String word) {
-        return find("LOWER(word) = LOWER(?1)", word).firstResult();
-    }
-
-    public static Stream<Word> streamByMinPoints(Integer minPoints) {
-        return stream("points >= ?1 ORDER BY points DESC", minPoints);
+        return find("word", word).firstResult();
     }
 
     public static Word findRandomWord() {
@@ -41,8 +48,21 @@ public class Word extends PanacheEntity {
         if (count == 0) {
             return null;
         }
-        int randomIndex = new Random().nextInt((int) count);
-        return findAll().page(randomIndex, 1).firstResult();
+        int randomIndex = (int) (Math.random() * count);
+        return Word.<Word>findAll().page(randomIndex, 1).firstResult();
+    }
+
+    public static Word findRandomWordByCategory(WordCategory category) {
+        java.util.List<Word> words = Word.<Word>list("category", category);
+        if (words.isEmpty()) {
+            return null;
+        }
+        int randomIndex = (int) (Math.random() * words.size());
+        return words.get(randomIndex);
+    }
+
+    public static long countWords() {
+        return count();
     }
 
     public static void deleteAllWords() {

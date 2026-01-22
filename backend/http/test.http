@@ -1,0 +1,88 @@
+### 1. Create a game
+POST http://localhost:8080/games
+Content-Type: application/json
+
+{
+  "name": "Test Game"
+}
+
+### 2. Create Team 1
+POST http://localhost:8080/teams
+Content-Type: application/json
+
+{
+  "position": 1,
+  "gameId": 1
+}
+
+### 3. Create Team 2
+POST http://localhost:8080/teams
+Content-Type: application/json
+
+{
+  "position": 2,
+  "gameId": 1
+}
+
+### 4. Create Player 1 for Team 1
+POST http://localhost:8080/players
+Content-Type: application/json
+
+{
+  "name": "Anna Schmidt",
+  "pointsEarned": 0,
+  "teamId": 1
+}
+
+### 5. Create Player 2 for Team 1
+POST http://localhost:8080/players
+Content-Type: application/json
+
+{
+  "name": "Peter Müller",
+  "pointsEarned": 0,
+  "teamId": 1
+}
+
+### 6. Create Player 3 for Team 2
+POST http://localhost:8080/players
+Content-Type: application/json
+
+{
+  "name": "Maria Weber",
+  "pointsEarned": 0,
+  "teamId": 2
+}
+
+### 7. Create some words
+POST http://localhost:8080/api/words
+Content-Type: application/json
+
+{
+  "word": "Programmieren",
+  "definition": "Das Schreiben von Computerprogrammen",
+  "points": 30,
+  "category": "DESCRIBE"
+}
+
+### 8. Update player points
+PUT http://localhost:8080/players/1
+Content-Type: application/json
+
+{
+  "name": "Anna Schmidt",
+  "pointsEarned": 30,
+  "teamId": 1
+}
+
+### 9. Get all games with teams
+GET http://localhost:8080/games
+
+### 10. Get all teams
+GET http://localhost:8080/teams
+
+### 11. Get all players
+GET http://localhost:8080/players
+
+### 12. Get all words
+GET http://localhost:8080/api/words
