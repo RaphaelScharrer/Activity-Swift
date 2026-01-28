@@ -9,6 +9,7 @@ data class TeamSelectState(
     val teams: List<Team> = emptyList(),
     val error: String? = null,
     val successMessage: String? = null,
+    val messageType: MessageType = MessageType.INFO,
     val isLoading: Boolean = false,
     val selectedTeamId: Long? = null,
     val hasChanges: Boolean = false

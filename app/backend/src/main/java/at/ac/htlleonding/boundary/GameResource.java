@@ -9,7 +9,6 @@ import jakarta.ws.rs.core.Response;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Path("/games")
 @Produces(MediaType.APPLICATION_JSON)
@@ -18,9 +17,10 @@ public class GameResource {
 
     @GET
     public List<GameDTO> getAllGames() {
+        // ✅ FIX: Use toList() instead of collect()
         return Game.<Game>listAll().stream()
                 .map(GameDTO::new)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @GET
@@ -52,7 +52,7 @@ public class GameResource {
         if (game == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        game.name = gameDTO.name;
+        game.name = gameDTO.name();
         return Response.ok(new GameDTO(game)).build();
     }
 

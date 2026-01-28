@@ -3,29 +3,22 @@ package at.ac.htlleonding.dto;
 import at.ac.htlleonding.model.Team;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
-public class TeamDTO {
-
-    public Long id;
-    public Integer position;
-    public Long gameId;
-    public List<Long> playerIds;
-
-    public TeamDTO() {
-    }
-
+public record TeamDTO(
+        Long id,
+        Integer position,
+        Long gameId,
+        List<Long> playerIds
+) {
     public TeamDTO(Team team) {
-        this.id = team.id;
-        this.position = team.position;
-        if (team.game != null) {
-            this.gameId = team.game.id;
-        }
-        if (team.players != null) {
-            this.playerIds = team.players.stream()
-                    .map(player -> player.id)
-                    .collect(Collectors.toList());
-        }
+        this(
+                team.id,
+                team.position,
+                team.game != null ? team.game.id : null,
+                team.players != null
+                        ? team.players.stream().map(player -> player.id).toList()
+                        : null
+        );
     }
 
     public Team toEntity() {

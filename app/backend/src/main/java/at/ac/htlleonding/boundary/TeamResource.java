@@ -1,26 +1,41 @@
-package at.ac.htlleonding.resource;
+package at.ac.htlleonding.boundary;
 
+import at.ac.htlleonding.dto.ErrorResponse;
 import at.ac.htlleonding.dto.TeamDTO;
 import at.ac.htlleonding.model.Game;
 import at.ac.htlleonding.model.Team;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Path("/teams")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class TeamResource {
 
+    @Context
+    UriInfo uriInfo;
+
     @GET
-    public List<TeamDTO> getAllTeams() {
-        return Team.<Team>streamAll()
-                .map(TeamDTO::new)
-                .collect(Collectors.toList());
+    public Response getAllTeams() {
+        try {
+            // ✅ FIX: Use listAll() instead of streamAll() to avoid ResultSet closed
+            List<TeamDTO> teams = Team.<Team>listAll().stream()
+                    .map(TeamDTO::new)
+                    .toList();
+
+            return Response.ok(teams).build();
+        } catch (Exception e) {
+            return Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(ErrorResponse.of(500, "Fehler beim Laden der Teams", uriInfo.getPath()))
+                    .build();
+        }
     }
 
     @GET
@@ -48,8 +63,8 @@ public class TeamResource {
     public Response createTeam(TeamDTO teamDTO) {
         Team team = teamDTO.toEntity();
 
-        if (teamDTO.gameId != null) {
-            Game game = Game.findById(teamDTO.gameId);
+        if (teamDTO.gameId() != null) {
+            Game game = Game.findById(teamDTO.gameId());
             if (game == null) {
                 return Response.status(Response.Status.BAD_REQUEST)
                         .entity("Game not found")
@@ -73,10 +88,10 @@ public class TeamResource {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
-        team.position = teamDTO.position;
+        team.position = teamDTO.position();
 
-        if (teamDTO.gameId != null) {
-            Game game = Game.findById(teamDTO.gameId);
+        if (teamDTO.gameId() != null) {
+            Game game = Game.findById(teamDTO.gameId());
             if (game == null) {
                 return Response.status(Response.Status.BAD_REQUEST)
                         .entity("Game not found")

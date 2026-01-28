@@ -16,10 +16,6 @@ class GameGenerationViewModel : ViewModel() {
     private val _state = MutableStateFlow(GameGenerationState())
     val state: StateFlow<GameGenerationState> = _state
 
-    init {
-        loadRecentGames()
-    }
-
     fun onEvent(event: GameGenerationEvent) {
         when (event) {
             is GameGenerationEvent.GameNameChanged -> _state.update {
@@ -28,13 +24,15 @@ class GameGenerationViewModel : ViewModel() {
 
             is GameGenerationEvent.CreateGame -> createGame(event.onSuccess)
 
-            is GameGenerationEvent.SelectExistingGame -> selectExistingGame(event.game, event.onSuccess)
-
             GameGenerationEvent.LoadRecentGames -> loadRecentGames()
 
             GameGenerationEvent.ClearMessages -> _state.update {
                 it.copy(error = null, successMessage = null)
             }
+
+            is GameGenerationEvent.LoadGame -> loadGame(event.gameId)
+
+            is GameGenerationEvent.UpdateGame -> updateGame(event.gameId, event.onSuccess)
         }
     }
 
@@ -45,7 +43,7 @@ class GameGenerationViewModel : ViewModel() {
                 val games = api.getAllGames()
                 _state.update {
                     it.copy(
-                        recentGames = games.take(5), // Nur die letzten 5 Spiele
+                        recentGames = games.take(5),
                         isLoading = false
                     )
                 }
@@ -53,6 +51,74 @@ class GameGenerationViewModel : ViewModel() {
                 _state.update {
                     it.copy(
                         error = "Fehler beim Laden der Spiele: ${e.message}",
+                        isLoading = false
+                    )
+                }
+            }
+        }
+    }
+
+    fun loadGame(gameId: Long) {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true) }
+            try {
+                val game = api.getGame(gameId)
+                _state.update {
+                    it.copy(
+                        currentGame = game,
+                        gameNameInput = game.name ?: "",
+                        isLoading = false
+                    )
+                }
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(
+                        error = "Fehler beim Laden: ${e.message}",
+                        isLoading = false
+                    )
+                }
+            }
+        }
+    }
+
+    private fun updateGame(gameId: Long, onSuccess: (Long) -> Unit) {
+        val gameName = _state.value.gameNameInput.trim()
+
+        if (gameName.isEmpty()) {
+            _state.update {
+                it.copy(error = "Bitte einen Spielnamen eingeben")
+            }
+            return
+        }
+
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, error = null) }
+
+            try {
+                val currentGame = _state.value.currentGame
+                val updatedGame = Game(
+                    id = gameId,
+                    name = gameName,
+                    createdOn = currentGame?.createdOn,
+                    teamIds = currentGame?.teamIds
+                )
+
+                val savedGame = api.updateGame(gameId, updatedGame)
+
+                _state.update {
+                    it.copy(
+                        currentGame = savedGame,
+                        isLoading = false,
+                        successMessage = "Spiel aktualisiert!"
+                    )
+                }
+
+                onSuccess(gameId)
+
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(
+                        error = "Fehler beim Aktualisieren: ${e.message}",
                         isLoading = false
                     )
                 }
@@ -77,7 +143,7 @@ class GameGenerationViewModel : ViewModel() {
                 val newGame = Game(
                     id = null,
                     name = gameName,
-                    createdOn = null,  // ← Wird vom Backend gesetzt
+                    createdOn = null,
                     teamIds = null
                 )
 
@@ -87,12 +153,11 @@ class GameGenerationViewModel : ViewModel() {
                     it.copy(
                         currentGame = createdGame,
                         isLoading = false,
-                        successMessage = "Spiel '${createdGame.name}' erstellt!",
+                        //successMessage = "Spiel '${createdGame.name}' erstellt!",
                         gameNameInput = ""
                     )
                 }
 
-                // Navigate zur Team-Erstellung mit Game-ID
                 createdGame.id?.let { gameId ->
                     onSuccess(gameId)
                 }
@@ -105,19 +170,6 @@ class GameGenerationViewModel : ViewModel() {
                     )
                 }
             }
-        }
-    }
-
-    private fun selectExistingGame(game: Game, onSuccess: (Long) -> Unit) {
-        _state.update {
-            it.copy(
-                currentGame = game,
-                successMessage = "Spiel '${game.name}' ausgewählt"
-            )
-        }
-
-        game.id?.let { gameId ->
-            onSuccess(gameId)
         }
     }
 }

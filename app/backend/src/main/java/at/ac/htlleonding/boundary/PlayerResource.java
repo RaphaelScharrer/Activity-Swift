@@ -15,7 +15,7 @@ import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
 
-@Path("/api/players")
+@Path("/players")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class PlayerResource {
@@ -26,16 +26,17 @@ public class PlayerResource {
     @GET
     public Response getAllPlayers() {
         try {
-            List<PlayerDTO> players = Player.streamAll()
-                .map(PlayerDTO::from)
-                .toList();
-            
+            // ✅ FIX: Use listAll() instead of streamAll()
+            List<PlayerDTO> players = Player.<Player>listAll().stream()
+                    .map(PlayerDTO::from)
+                    .toList();
+
             return Response.ok(players).build();
         } catch (Exception e) {
             return Response
-                .status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(ErrorResponse.of(500, "Fehler beim Laden der Spieler", uriInfo.getPath()))
-                .build();
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(ErrorResponse.of(500, "Fehler beim Laden der Spieler", uriInfo.getPath()))
+                    .build();
         }
     }
 
@@ -43,14 +44,14 @@ public class PlayerResource {
     @Path("/{id}")
     public Response getPlayer(@PathParam("id") Long id) {
         Player player = Player.findById(id);
-        
+
         if (player == null) {
             return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity(ErrorResponse.of(404, "Spieler mit ID " + id + " nicht gefunden", uriInfo.getPath()))
-                .build();
+                    .status(Response.Status.NOT_FOUND)
+                    .entity(ErrorResponse.of(404, "Spieler mit ID " + id + " nicht gefunden", uriInfo.getPath()))
+                    .build();
         }
-        
+
         return Response.ok(PlayerDTO.from(player)).build();
     }
 
@@ -58,25 +59,26 @@ public class PlayerResource {
     @Path("/team/{teamId}")
     public Response getPlayersByTeam(@PathParam("teamId") Long teamId) {
         Team team = Team.findById(teamId);
-        
+
         if (team == null) {
             return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity(ErrorResponse.of(404, "Team mit ID " + teamId + " nicht gefunden", uriInfo.getPath()))
-                .build();
+                    .status(Response.Status.NOT_FOUND)
+                    .entity(ErrorResponse.of(404, "Team mit ID " + teamId + " nicht gefunden", uriInfo.getPath()))
+                    .build();
         }
 
         try {
-            List<PlayerDTO> players = Player.streamByTeam(team)
-                .map(PlayerDTO::from)
-                .toList();
-            
+            // ✅ FIX: Use list() instead of streamByTeam()
+            List<PlayerDTO> players = Player.<Player>list("team", team).stream()
+                    .map(PlayerDTO::from)
+                    .toList();
+
             return Response.ok(players).build();
         } catch (Exception e) {
             return Response
-                .status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(ErrorResponse.of(500, "Fehler beim Laden der Spieler", uriInfo.getPath()))
-                .build();
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(ErrorResponse.of(500, "Fehler beim Laden der Spieler", uriInfo.getPath()))
+                    .build();
         }
     }
 
@@ -87,18 +89,18 @@ public class PlayerResource {
             // Validierung: Name darf nicht leer sein
             if (dto.name() == null || dto.name().trim().isEmpty()) {
                 return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity(ErrorResponse.of(400, "Spielername darf nicht leer sein", uriInfo.getPath()))
-                    .build();
+                        .status(Response.Status.BAD_REQUEST)
+                        .entity(ErrorResponse.of(400, "Spielername darf nicht leer sein", uriInfo.getPath()))
+                        .build();
             }
 
             // Prüfen ob Spieler bereits existiert
             Player existing = Player.findByName(dto.name());
             if (existing != null) {
                 return Response
-                    .status(Response.Status.CONFLICT)
-                    .entity(ErrorResponse.of(409, "Spieler mit Name '" + dto.name() + "' existiert bereits", uriInfo.getPath()))
-                    .build();
+                        .status(Response.Status.CONFLICT)
+                        .entity(ErrorResponse.of(409, "Spieler mit Name '" + dto.name() + "' existiert bereits", uriInfo.getPath()))
+                        .build();
             }
 
             // Team laden wenn angegeben
@@ -107,9 +109,9 @@ public class PlayerResource {
                 team = Team.findById(dto.team());
                 if (team == null) {
                     return Response
-                        .status(Response.Status.BAD_REQUEST)
-                        .entity(ErrorResponse.of(400, "Team mit ID " + dto.team() + " nicht gefunden", uriInfo.getPath()))
-                        .build();
+                            .status(Response.Status.BAD_REQUEST)
+                            .entity(ErrorResponse.of(400, "Team mit ID " + dto.team() + " nicht gefunden", uriInfo.getPath()))
+                            .build();
                 }
             }
 
@@ -118,15 +120,15 @@ public class PlayerResource {
 
             URI location = uriInfo.getAbsolutePathBuilder().path(player.id.toString()).build();
             return Response
-                .created(location)
-                .entity(PlayerDTO.from(player))
-                .build();
+                    .created(location)
+                    .entity(PlayerDTO.from(player))
+                    .build();
 
         } catch (Exception e) {
             return Response
-                .status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(ErrorResponse.of(500, "Fehler beim Erstellen des Spielers: " + e.getMessage(), uriInfo.getPath()))
-                .build();
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(ErrorResponse.of(500, "Fehler beim Erstellen des Spielers: " + e.getMessage(), uriInfo.getPath()))
+                    .build();
         }
     }
 
@@ -135,12 +137,12 @@ public class PlayerResource {
     @Transactional
     public Response updatePlayer(@PathParam("id") Long id, @Valid PlayerDTO dto) {
         Player player = Player.findById(id);
-        
+
         if (player == null) {
             return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity(ErrorResponse.of(404, "Spieler mit ID " + id + " nicht gefunden", uriInfo.getPath()))
-                .build();
+                    .status(Response.Status.NOT_FOUND)
+                    .entity(ErrorResponse.of(404, "Spieler mit ID " + id + " nicht gefunden", uriInfo.getPath()))
+                    .build();
         }
 
         try {
@@ -150,9 +152,9 @@ public class PlayerResource {
                 Player existing = Player.findByName(dto.name());
                 if (existing != null && !existing.id.equals(id)) {
                     return Response
-                        .status(Response.Status.CONFLICT)
-                        .entity(ErrorResponse.of(409, "Spieler mit Name '" + dto.name() + "' existiert bereits", uriInfo.getPath()))
-                        .build();
+                            .status(Response.Status.CONFLICT)
+                            .entity(ErrorResponse.of(409, "Spieler mit Name '" + dto.name() + "' existiert bereits", uriInfo.getPath()))
+                            .build();
                 }
                 player.name = dto.name();
             }
@@ -162,9 +164,9 @@ public class PlayerResource {
                 Team team = Team.findById(dto.team());
                 if (team == null) {
                     return Response
-                        .status(Response.Status.BAD_REQUEST)
-                        .entity(ErrorResponse.of(400, "Team mit ID " + dto.team() + " nicht gefunden", uriInfo.getPath()))
-                        .build();
+                            .status(Response.Status.BAD_REQUEST)
+                            .entity(ErrorResponse.of(400, "Team mit ID " + dto.team() + " nicht gefunden", uriInfo.getPath()))
+                            .build();
                 }
                 player.team = team;
             } else {
@@ -181,9 +183,9 @@ public class PlayerResource {
 
         } catch (Exception e) {
             return Response
-                .status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(ErrorResponse.of(500, "Fehler beim Aktualisieren des Spielers: " + e.getMessage(), uriInfo.getPath()))
-                .build();
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(ErrorResponse.of(500, "Fehler beim Aktualisieren des Spielers: " + e.getMessage(), uriInfo.getPath()))
+                    .build();
         }
     }
 
@@ -192,12 +194,12 @@ public class PlayerResource {
     @Transactional
     public Response deletePlayer(@PathParam("id") Long id) {
         Player player = Player.findById(id);
-        
+
         if (player == null) {
             return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity(ErrorResponse.of(404, "Spieler mit ID " + id + " nicht gefunden", uriInfo.getPath()))
-                .build();
+                    .status(Response.Status.NOT_FOUND)
+                    .entity(ErrorResponse.of(404, "Spieler mit ID " + id + " nicht gefunden", uriInfo.getPath()))
+                    .build();
         }
 
         try {
@@ -205,9 +207,9 @@ public class PlayerResource {
             return Response.noContent().build();
         } catch (Exception e) {
             return Response
-                .status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(ErrorResponse.of(500, "Fehler beim Löschen des Spielers: " + e.getMessage(), uriInfo.getPath()))
-                .build();
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(ErrorResponse.of(500, "Fehler beim Löschen des Spielers: " + e.getMessage(), uriInfo.getPath()))
+                    .build();
         }
     }
 }

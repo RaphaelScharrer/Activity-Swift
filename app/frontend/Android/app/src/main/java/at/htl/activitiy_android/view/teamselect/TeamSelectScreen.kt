@@ -1,11 +1,14 @@
 package at.htl.activitiy_android.view.teamselect
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,39 +19,66 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import at.htl.activitiy_android.domain.model.PlayerWithTeam
 import at.htl.activitiy_android.domain.model.Team
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlayerCreationScreen(
-    gameId: Long,  // ← NEU: Game-ID als Parameter
+    gameId: Long,
+    onBack: () -> Unit = {},
+    onFinish: () -> Unit = {},
     vm: TeamSelectViewModel = viewModel(
-        factory = TeamSelectViewModelFactory(gameId)  // ← Factory mit gameId
+        factory = TeamSelectViewModelFactory(gameId)
     )
 ) {
     val state by vm.state.collectAsState()
 
+    // Auto-fade success messages after 3 seconds
+    LaunchedEffect(state.successMessage) {
+        if (state.successMessage != null) {
+            delay(3000)
+            vm.onEvent(TeamSelectEvent.ClearMessages)
+        }
+    }
+
+    // Load data when screen starts
     LaunchedEffect(Unit) {
         vm.onEvent(TeamSelectEvent.LoadData)
+
     }
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Spieler erstellen") })
+            TopAppBar(
+                title = { Text("Teams") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Zurück"
+                        )
+                    }
+                }
+            )
         },
         bottomBar = {
-            if (state.hasChanges) {
-                Surface(
-                    tonalElevation = 3.dp,
-                    shadowElevation = 8.dp
-                ) {
-                    Button(
-                        onClick = { vm.onEvent(TeamSelectEvent.SaveTeamsAndPlayers) },
-                        enabled = !state.isLoading,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    ) {
-                        Text("Speichern")
+            Surface(
+                tonalElevation = 3.dp,
+                shadowElevation = 8.dp
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    if (state.hasChanges) {
+                        Button(
+                            onClick = onFinish,
+                            enabled = !state.isLoading,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        ) {
+                            Text("Weiter")
+                        }
                     }
                 }
             }
@@ -125,28 +155,66 @@ fun PlayerCreationScreen(
                     }
                 }
 
-                // Success Message
-                if (state.successMessage != null) {
-                    Spacer(Modifier.height(8.dp))
-                    AssistChip(
-                        onClick = { vm.onEvent(TeamSelectEvent.ClearMessages) },
-                        label = { Text(state.successMessage ?: "") },
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                        )
-                    )
+                // Success Message with animation and color coding
+                AnimatedVisibility(
+                    visible = state.successMessage != null,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    Column {
+                        Spacer(Modifier.height(8.dp))
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = when (state.messageType) {
+                                    MessageType.INFO -> MaterialTheme.colorScheme.primaryContainer      // Blue
+                                    MessageType.WARNING -> MaterialTheme.colorScheme.errorContainer    // Red
+                                }
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    state.successMessage ?: "",
+                                    modifier = Modifier.weight(1f),
+                                    color = when (state.messageType) {
+                                        MessageType.INFO -> MaterialTheme.colorScheme.onPrimaryContainer
+                                        MessageType.WARNING -> MaterialTheme.colorScheme.onErrorContainer
+                                    }
+                                )
+                                TextButton(onClick = { vm.onEvent(TeamSelectEvent.ClearMessages) }) {
+                                    Text("OK")
+                                }
+                            }
+                        }
+                    }
                 }
 
-                // Error
+                // Error Message (stays until dismissed)
                 if (state.error != null) {
                     Spacer(Modifier.height(8.dp))
-                    AssistChip(
-                        onClick = { vm.onEvent(TeamSelectEvent.ClearMessages) },
-                        label = { Text(state.error ?: "") },
-                        colors = AssistChipDefaults.assistChipColors(
+                    Card(
+                        colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.errorContainer
-                        )
-                    )
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                state.error ?: "",
+                                modifier = Modifier.weight(1f),
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                            TextButton(onClick = { vm.onEvent(TeamSelectEvent.ClearMessages) }) {
+                                Text("OK")
+                            }
+                        }
+                    }
                 }
 
                 Spacer(Modifier.height(16.dp))

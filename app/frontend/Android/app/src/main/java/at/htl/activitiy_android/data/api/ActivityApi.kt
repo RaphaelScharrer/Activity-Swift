@@ -53,47 +53,48 @@ interface ActivityApi {
 
     // ========== PLAYER ENDPOINTS ==========
 
-    @GET("api/players")
+    @GET("players")
     suspend fun getAllPlayers(): List<Player>
 
-    @GET("api/players/{id}")
+    @GET("players/{id}")
     suspend fun getPlayer(@Path("id") id: Long): Player
 
-    @GET("api/players/team/{teamId}")
+    @GET("players/team/{teamId}")
     suspend fun getPlayersByTeam(@Path("teamId") teamId: Long): List<Player>
 
-    @POST("api/players")
+    @POST("players")
     suspend fun createPlayer(@Body player: Player): Player
 
-    @PUT("api/players/{id}")
+    @PUT("players/{id}")
     suspend fun updatePlayer(@Path("id") id: Long, @Body player: Player): Player
 
-    @DELETE("api/players/{id}")
+    @DELETE("players/{id}")
     suspend fun deletePlayer(@Path("id") id: Long)
 
     // ========== WORD ENDPOINTS ==========
+    // ✅ FIXED: Removed "api/" prefix to match backend routes
 
-    @GET("api/words")
+    @GET("words")
     suspend fun getAllWords(): List<Word>
 
-    @GET("api/words/{id}")
+    @GET("words/{id}")
     suspend fun getWord(@Path("id") id: Long): Word
 
-    @GET("api/words/random")
+    @GET("words/random")
     suspend fun getRandomWord(): Word
 
-    @GET("api/words/random/{category}")
+    @GET("words/random/{category}")
     suspend fun getRandomWordByCategory(@Path("category") category: String): Word
 
-    @GET("api/words/minpoints/{points}")
+    @GET("words/minpoints/{points}")
     suspend fun getWordsByMinPoints(@Path("points") minPoints: Int): List<Word>
 
-    @POST("api/words")
+    @POST("words")
     suspend fun createWord(@Body word: Word): Word
 
-    @PUT("api/words/{id}")
+    @PUT("words/{id}")
     suspend fun updateWord(@Path("id") id: Long, @Body word: Word): Word
 
-    @DELETE("api/words/{id}")
+    @DELETE("words/{id}")
     suspend fun deleteWord(@Path("id") id: Long)
 }

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import at.htl.activitiy_android.data.api.RetrofitInstance
 import at.htl.activitiy_android.domain.model.Player
 import at.htl.activitiy_android.domain.model.PlayerWithTeam
+import at.htl.activitiy_android.domain.model.Team
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -21,6 +22,8 @@ class TeamSelectViewModel(
     val state: StateFlow<TeamSelectState> = _state
 
     private val pendingPlayers = mutableListOf<Player>()
+    private var hasLoadedPlayers = false
+    private var cachedTeams: List<Team>? = null
 
     fun onEvent(event: TeamSelectEvent) {
         when (event) {
@@ -49,23 +52,44 @@ class TeamSelectViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             try {
-                // ✅ Alle Teams laden und nach gameId filtern
-                val allTeams = api.getAllTeams()
-                val teams = allTeams.filter { it.gameId == gameId }
-
-                // Alle Spieler laden
-                val allPlayers = api.getAllPlayers()
-
-                // Nur Spieler der Teams dieses Games
-                val players = allPlayers.filter { player ->
-                    teams.any { it.id == player.team }
+                val teams = if (cachedTeams != null) {
+                    cachedTeams!!
+                } else {
+                    try {
+                        val allTeams = api.getAllTeams()
+                        val filtered = allTeams.filter { it.gameId == gameId }
+                        cachedTeams = filtered
+                        filtered
+                    } catch (e: Exception) {
+                        println("Error loading all teams: ${e.message}")
+                        emptyList()
+                    }
                 }
 
-                val playersWithTeams = players.map { player ->
-                    PlayerWithTeam(
-                        player = player,
-                        team = teams.find { it.id == player.team }
-                    )
+                val playersWithTeams = if (hasLoadedPlayers || _state.value.players.isNotEmpty()) {
+                    try {
+                        val allPlayers = api.getAllPlayers()
+
+                        val players = allPlayers.filter { player ->
+                            teams.any { it.id == player.team }
+                        }
+
+                        if (players.isNotEmpty()) {
+                            hasLoadedPlayers = true
+                        }
+
+                        players.map { player ->
+                            PlayerWithTeam(
+                                player = player,
+                                team = teams.find { it.id == player.team }
+                            )
+                        }
+                    } catch (e: Exception) {
+                        println("Error loading players: ${e.message}")
+                        emptyList()
+                    }
+                } else {
+                    emptyList()
                 }
 
                 _state.update {
@@ -73,7 +97,7 @@ class TeamSelectViewModel(
                         teams = teams,
                         players = playersWithTeams,
                         isLoading = false,
-                        selectedTeamId = teams.firstOrNull()?.id,
+                        selectedTeamId = it.selectedTeamId ?: teams.firstOrNull()?.id,
                         hasChanges = false
                     )
                 }
@@ -127,20 +151,26 @@ class TeamSelectViewModel(
                 nameInput = "",
                 players = it.players + newPlayerWithTeam,
                 hasChanges = true,
-                successMessage = "Spieler lokal hinzugefügt. Bitte speichern!"
+                successMessage = "Spieler '$name' hinzugefügt!",
+                messageType = MessageType.INFO
             )
         }
+        saveToBackend()
     }
 
     private fun removePlayerLocally(playerId: Long) {
         viewModelScope.launch {
             try {
+                val playerName = _state.value.players.find { it.player.id == playerId }?.player?.name
+
                 api.deletePlayer(playerId)
 
                 _state.update { s ->
                     s.copy(
                         players = s.players.filterNot { it.player.id == playerId },
-                        hasChanges = false
+                        hasChanges = false,
+                        successMessage = "Spieler '$playerName' entfernt",
+                        messageType = MessageType.INFO
                     )
                 }
             } catch (e: Exception) {
@@ -155,13 +185,18 @@ class TeamSelectViewModel(
         _state.update { s ->
             s.copy(
                 players = s.players.filterNot { it.player.name == name },
-                hasChanges = true
+                hasChanges = true,
+                successMessage = "Spieler '$name' entfernt",
+                messageType = MessageType.INFO
             )
         }
         pendingPlayers.removeAll { it.name == name }
     }
 
     private fun changeTeamLocally(playerId: Long, teamId: Long) {
+        val teamName = _state.value.teams.find { it.id == teamId }?.label
+        val playerName = _state.value.players.find { it.player.id == playerId }?.player?.name
+
         _state.update { s ->
             val updatedPlayers = s.players.map { playerWithTeam ->
                 if (playerWithTeam.player.id == playerId) {
@@ -172,7 +207,12 @@ class TeamSelectViewModel(
                     playerWithTeam
                 }
             }
-            s.copy(players = updatedPlayers, hasChanges = true)
+            s.copy(
+                players = updatedPlayers,
+                hasChanges = true,
+                successMessage = "$playerName zu '$teamName' geändert",
+                messageType = MessageType.INFO
+            )
         }
     }
 
@@ -181,15 +221,14 @@ class TeamSelectViewModel(
             _state.update { it.copy(isLoading = true, error = null) }
 
             try {
-                // Neue Spieler speichern
                 if (pendingPlayers.isNotEmpty()) {
                     pendingPlayers.forEach { player ->
                         api.createPlayer(player)
                     }
                     pendingPlayers.clear()
+                    hasLoadedPlayers = true
                 }
 
-                // Bestehende Spieler updaten
                 _state.value.players
                     .filter { it.player.id != null }
                     .forEach { playerWithTeam ->
@@ -204,6 +243,7 @@ class TeamSelectViewModel(
                         isLoading = false,
                         hasChanges = false,
                         successMessage = "Erfolgreich gespeichert!",
+                        messageType = MessageType.INFO,
                         error = null
                     )
                 }
@@ -222,6 +262,8 @@ class TeamSelectViewModel(
     }
 
     private fun changeTeamByName(playerName: String, teamId: Long) {
+        val teamName = _state.value.teams.find { it.id == teamId }?.label
+
         _state.update { s ->
             val updatedPlayers = s.players.map { playerWithTeam ->
                 if (playerWithTeam.player.name == playerName) {
@@ -232,7 +274,12 @@ class TeamSelectViewModel(
                     playerWithTeam
                 }
             }
-            s.copy(players = updatedPlayers, hasChanges = true)
+            s.copy(
+                players = updatedPlayers,
+                hasChanges = true,
+                successMessage = "Team zu '$teamName' geändert",
+                messageType = MessageType.INFO
+            )
         }
 
         val index = pendingPlayers.indexOfFirst { it.name == playerName }
@@ -240,6 +287,7 @@ class TeamSelectViewModel(
             pendingPlayers[index] = pendingPlayers[index].copy(team = teamId)
         }
     }
+
 }
 
 class TeamSelectViewModelFactory(

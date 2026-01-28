@@ -19,6 +19,12 @@ class TeamGenerationViewModel(
     private val _state = MutableStateFlow(TeamGenerationState())
     val state: StateFlow<TeamGenerationState> = _state
 
+    private var lastSavedTeamCount: Int? = null
+
+    init {
+        loadExistingTeams()
+    }
+
     fun onEvent(event: TeamGenerationEvent) {
         when (event) {
             is TeamGenerationEvent.TeamCountChanged -> _state.update {
@@ -27,10 +33,31 @@ class TeamGenerationViewModel(
 
             TeamGenerationEvent.GenerateTeams -> generateTeams()
 
-            is TeamGenerationEvent.SaveTeams -> saveTeams(event.onSuccess)
+            is TeamGenerationEvent.SaveTeams -> validateGenerateAndSave(event.onSuccess)
 
             TeamGenerationEvent.ClearMessages -> _state.update {
                 it.copy(error = null, successMessage = null)
+            }
+        }
+    }
+
+    private fun loadExistingTeams() {
+        viewModelScope.launch {
+            try {
+                val allTeams = api.getAllTeams()
+                val existingTeams = allTeams.filter { it.gameId == gameId }.sortedBy { it.position }
+
+                if (existingTeams.isNotEmpty()) {
+                    lastSavedTeamCount = existingTeams.size
+                    _state.update {
+                        it.copy(
+                            teamCountInput = existingTeams.size.toString(),
+                            teams = existingTeams
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                println("Error loading existing teams: ${e.message}")
             }
         }
     }
@@ -55,7 +82,7 @@ class TeamGenerationViewModel(
         val newTeams = (0 until count).map { i ->
             Team(
                 id = null,
-                position = i,  // ← Integer position
+                position = i,
                 gameId = gameId,
                 playerIds = null
             )
@@ -65,30 +92,113 @@ class TeamGenerationViewModel(
             it.copy(
                 teams = newTeams,
                 hasChanges = true,
-                successMessage = "$count Teams generiert. Bitte speichern!",
                 error = null
             )
         }
     }
 
-    private fun saveTeams(onSuccess: () -> Unit) {
+    private fun validateGenerateAndSave(onSuccess: () -> Unit) {
+        val count = _state.value.teamCountInput.toIntOrNull()
+
+        if (count == null) {
+            _state.update {
+                it.copy(error = "Bitte eine gültige Zahl eingeben")
+            }
+            return
+        }
+
+        if (count < 1 || count > 4) {
+            _state.update {
+                it.copy(error = "Bitte eine Zahl zwischen 1 und 4 eingeben")
+            }
+            return
+        }
+
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
 
             try {
-                val savedTeams = mutableListOf<Team>()
+                val oldTeams = api.getAllTeams().filter { it.gameId == gameId }
 
-                _state.value.teams.forEach { team ->
-                    val saved = api.createTeam(team)
-                    savedTeams.add(saved)
-                }
+                // ✅ CHECK: Did team count actually change?
+                val teamCountChanged = lastSavedTeamCount != null && lastSavedTeamCount != count
 
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        hasChanges = false,
-                        successMessage = "Teams erfolgreich gespeichert!"
-                    )
+                if (teamCountChanged) {
+                    // Team count changed - delete everything and start fresh
+                    oldTeams.forEach { team ->
+                        team.id?.let { teamId ->
+                            api.deleteTeam(teamId)
+                        }
+                    }
+
+                    val allPlayers = api.getAllPlayers()
+                    allPlayers.forEach { player ->
+                        if (oldTeams.any { it.id == player.team }) {
+                            player.id?.let { playerId ->
+                                api.deletePlayer(playerId)
+                            }
+                        }
+                    }
+
+                    // Create new teams
+                    val newTeams = (0 until count).map { i ->
+                        Team(
+                            id = null,
+                            position = i,
+                            gameId = gameId,
+                            playerIds = null
+                        )
+                    }
+
+                    val savedTeams = mutableListOf<Team>()
+                    newTeams.forEach { team ->
+                        val saved = api.createTeam(team)
+                        savedTeams.add(saved)
+                    }
+
+                    lastSavedTeamCount = count
+
+                    _state.update {
+                        it.copy(
+                            teams = savedTeams,
+                            isLoading = false,
+                            hasChanges = false,
+                        )
+                    }
+                } else if (lastSavedTeamCount == null) {
+                    // First time creating teams
+                    val newTeams = (0 until count).map { i ->
+                        Team(
+                            id = null,
+                            position = i,
+                            gameId = gameId,
+                            playerIds = null
+                        )
+                    }
+
+                    val savedTeams = mutableListOf<Team>()
+                    newTeams.forEach { team ->
+                        val saved = api.createTeam(team)
+                        savedTeams.add(saved)
+                    }
+
+                    lastSavedTeamCount = count
+
+                    _state.update {
+                        it.copy(
+                            teams = savedTeams,
+                            isLoading = false,
+                            hasChanges = false,
+                        )
+                    }
+                } else {
+                    // Same count - just navigate forward without touching data
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            hasChanges = false,
+                        )
+                    }
                 }
 
                 onSuccess()

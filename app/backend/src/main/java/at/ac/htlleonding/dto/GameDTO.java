@@ -4,29 +4,26 @@ import at.ac.htlleonding.model.Game;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
-public class GameDTO {
-
-    public Long id;
-    public String name;
-    public LocalDateTime createdOn;
-    public List<Long> teamIds;
-
-    public GameDTO() {
-    }
-
+public record GameDTO(
+        Long id,
+        String name,
+        LocalDateTime createdOn,
+        List<Long> teamIds
+) {
+    // Constructor from Game entity
     public GameDTO(Game game) {
-        this.id = game.id;
-        this.name = game.name;
-        this.createdOn = game.createdOn;
-        if (game.teams != null) {
-            this.teamIds = game.teams.stream()
-                    .map(team -> team.id)
-                    .collect(Collectors.toList());
-        }
+        this(
+                game.id,
+                game.name,
+                game.createdOn,
+                game.teams != null
+                        ? game.teams.stream().map(team -> team.id).toList()
+                        : null
+        );
     }
 
+    // Convert back to entity
     public Game toEntity() {
         Game game = new Game();
         game.id = this.id;
