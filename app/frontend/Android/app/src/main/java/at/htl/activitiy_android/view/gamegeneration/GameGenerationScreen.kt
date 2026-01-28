@@ -36,14 +36,6 @@ fun GameGenerationScreen(
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        /*
-                        Icon(
-                            Icons.Default.SportsEsports,
-                            contentDescription = null,
-                            modifier = Modifier.size(28.dp)
-                        )
-
-                         */
                         Spacer(Modifier.width(12.dp))
                         Text("Neues Spiel starten")
                     }
@@ -132,8 +124,6 @@ fun GameGenerationScreen(
                             enabled = !state.isLoading && state.gameNameInput.isNotBlank(),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            //Icon(Icons.Default.PlayArrow, contentDescription = null)
-                            Spacer(Modifier.width(8.dp))
                             Text("Spiel starten")
                         }
                     }
@@ -183,6 +173,8 @@ fun GameGenerationScreen(
                 // Recent Games Section
                 if (state.recentGames.isNotEmpty()) {
                     Spacer(Modifier.height(24.dp))
+
+                    HorizontalDivider()
 
                     Spacer(Modifier.height(16.dp))
 
@@ -252,14 +244,13 @@ private fun GameCard(
                     .background(MaterialTheme.colorScheme.secondaryContainer),
                 contentAlignment = Alignment.Center
             ) {
-                /*
-                Icon(
-                    Icons.Default.SportsEsports,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                // Icon-Platzhalter - kann später wieder aktiviert werden
+                Text(
+                    text = game.name?.firstOrNull()?.uppercaseChar()?.toString() ?: "?",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
-
-                 */
             }
 
             Spacer(Modifier.width(16.dp))
@@ -271,9 +262,10 @@ private fun GameCard(
                     fontWeight = FontWeight.SemiBold
                 )
 
-                if (game.teams != null && game.teams.isNotEmpty()) {
+                // teamIds vom Backend verwenden
+                if (game.teamIds != null && game.teamIds.isNotEmpty()) {
                     Text(
-                        "${game.teams.size} Teams",
+                        "${game.teamIds.size} Teams",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )

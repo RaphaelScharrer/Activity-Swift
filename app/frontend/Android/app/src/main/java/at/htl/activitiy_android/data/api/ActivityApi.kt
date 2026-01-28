@@ -8,51 +8,92 @@ import retrofit2.http.*
 
 interface ActivityApi {
 
-    // Teams
-    @GET("api/teams")
+    // ========== GAME ENDPOINTS ==========
+
+    @GET("games")
+    suspend fun getAllGames(): List<Game>
+
+    @GET("games/{id}")
+    suspend fun getGame(@Path("id") id: Long): Game
+
+    @POST("games")
+    suspend fun createGame(@Body game: Game): Game
+
+    @PUT("games/{id}")
+    suspend fun updateGame(@Path("id") id: Long, @Body game: Game): Game
+
+    @DELETE("games/{id}")
+    suspend fun deleteGame(@Path("id") id: Long)
+
+    @DELETE("games")
+    suspend fun deleteAllGames()
+
+    // ========== TEAM ENDPOINTS ==========
+
+    @GET("teams")
     suspend fun getAllTeams(): List<Team>
 
-    @GET("api/teams/game/{gameId}")
-    suspend fun getTeamsByGame(@Path("gameId") gameId: Long): List<Team>
+    @GET("teams/{id}")
+    suspend fun getTeam(@Path("id") id: Long): Team
 
-    @POST("api/teams")
+    @GET("teams/position/{position}")
+    suspend fun getTeamByPosition(@Path("position") position: Int): Team
+
+    @POST("teams")
     suspend fun createTeam(@Body team: Team): Team
 
-    @PUT("api/teams/{id}")
+    @PUT("teams/{id}")
     suspend fun updateTeam(@Path("id") id: Long, @Body team: Team): Team
 
-    @DELETE("api/teams/{id}")
+    @DELETE("teams/{id}")
     suspend fun deleteTeam(@Path("id") id: Long)
 
-    // Players
+    @DELETE("teams")
+    suspend fun deleteAllTeams()
+
+    // ========== PLAYER ENDPOINTS ==========
+
     @GET("api/players")
     suspend fun getAllPlayers(): List<Player>
+
+    @GET("api/players/{id}")
+    suspend fun getPlayer(@Path("id") id: Long): Player
+
+    @GET("api/players/team/{teamId}")
+    suspend fun getPlayersByTeam(@Path("teamId") teamId: Long): List<Player>
 
     @POST("api/players")
     suspend fun createPlayer(@Body player: Player): Player
 
-    @PUT("api/players/{id}") // Spieler updaten (für Team-Zuweisung!)
+    @PUT("api/players/{id}")
     suspend fun updatePlayer(@Path("id") id: Long, @Body player: Player): Player
 
     @DELETE("api/players/{id}")
     suspend fun deletePlayer(@Path("id") id: Long)
 
-    // Games
-    @GET("api/games")
-    suspend fun getAllGames(): List<Game>
+    // ========== WORD ENDPOINTS ==========
 
-    @GET("api/games/{id}")
-    suspend fun getGame(@Path("id") id: Long): Game
+    @GET("api/words")
+    suspend fun getAllWords(): List<Word>
 
-    @GET("api/games/{id}/full")
-    suspend fun getGameWithTeams(@Path("id") id: Long): Game
+    @GET("api/words/{id}")
+    suspend fun getWord(@Path("id") id: Long): Word
 
-    @POST("api/games")
-    suspend fun createGame(@Body game: Game): Game
+    @GET("api/words/random")
+    suspend fun getRandomWord(): Word
 
-    @PUT("api/games/{id}")
-    suspend fun updateGame(@Path("id") id: Long, @Body game: Game): Game
+    @GET("api/words/random/{category}")
+    suspend fun getRandomWordByCategory(@Path("category") category: String): Word
 
-    @DELETE("api/games/{id}")
-    suspend fun deleteGame(@Path("id") id: Long)
+    @GET("api/words/minpoints/{points}")
+    suspend fun getWordsByMinPoints(@Path("points") minPoints: Int): List<Word>
+
+    @POST("api/words")
+    suspend fun createWord(@Body word: Word): Word
+
+    @PUT("api/words/{id}")
+    suspend fun updateWord(@Path("id") id: Long, @Body word: Word): Word
+
+    @DELETE("api/words/{id}")
+    suspend fun deleteWord(@Path("id") id: Long)
 }

@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class TeamSelectViewModel(
-    private val gameId: Long  // ← NEU: Game-ID als Parameter
+    private val gameId: Long
 ) : ViewModel() {
 
     private val api = RetrofitInstance.api
@@ -49,11 +49,14 @@ class TeamSelectViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             try {
-                // ✅ Nur Teams des aktuellen Games laden
-                val teams = api.getTeamsByGame(gameId)
+                // ✅ Alle Teams laden und nach gameId filtern
+                val allTeams = api.getAllTeams()
+                val teams = allTeams.filter { it.gameId == gameId }
 
-                // Alle Spieler laden und filtern (falls nötig)
+                // Alle Spieler laden
                 val allPlayers = api.getAllPlayers()
+
+                // Nur Spieler der Teams dieses Games
                 val players = allPlayers.filter { player ->
                     teams.any { it.id == player.team }
                 }
@@ -239,7 +242,6 @@ class TeamSelectViewModel(
     }
 }
 
-// ✅ Factory für ViewModel mit gameId Parameter
 class TeamSelectViewModelFactory(
     private val gameId: Long
 ) : ViewModelProvider.Factory {

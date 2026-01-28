@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class TeamGenerationViewModel(
-    private val gameId: Long  // ← NEU: Game-ID als Parameter
+    private val gameId: Long
 ) : ViewModel() {
 
     private val api = RetrofitInstance.api
@@ -55,9 +55,9 @@ class TeamGenerationViewModel(
         val newTeams = (0 until count).map { i ->
             Team(
                 id = null,
-                position = i.toLong(),
-                gameId = gameId,  // ← Game-ID setzen!
-                players = null
+                position = i,  // ← Integer position
+                gameId = gameId,
+                playerIds = null
             )
         }
 
@@ -79,7 +79,6 @@ class TeamGenerationViewModel(
                 val savedTeams = mutableListOf<Team>()
 
                 _state.value.teams.forEach { team ->
-                    // Team hat bereits gameId durch generateTeams()
                     val saved = api.createTeam(team)
                     savedTeams.add(saved)
                 }
@@ -92,7 +91,6 @@ class TeamGenerationViewModel(
                     )
                 }
 
-                // Navigate zur Player-Erstellung
                 onSuccess()
 
             } catch (e: Exception) {
@@ -107,7 +105,6 @@ class TeamGenerationViewModel(
     }
 }
 
-// ✅ Factory für ViewModel mit gameId Parameter
 class TeamGenerationViewModelFactory(
     private val gameId: Long
 ) : ViewModelProvider.Factory {

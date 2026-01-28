@@ -77,7 +77,8 @@ class GameGenerationViewModel : ViewModel() {
                 val newGame = Game(
                     id = null,
                     name = gameName,
-                    teams = null
+                    createdOn = null,  // ← Wird vom Backend gesetzt
+                    teamIds = null
                 )
 
                 val createdGame = api.createGame(newGame)
